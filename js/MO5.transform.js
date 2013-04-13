@@ -92,6 +92,11 @@
             var t, dt, tElapsed;
             
             if ((Date.now() - lastExecution) > (1000 / fps)) {
+                
+                if (timer.canceled) {
+                    return;
+                }
+                
                 if (timer.paused) {
                     timer.once(func, "resumed");
                     
