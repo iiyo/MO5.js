@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MO5.js Test Lab</title>
+        <link rel="stylesheet" href="../../RocketScience.js/css/screen.css" />
+    </head>
+    <body>
+        <script src="../../Squiddle.js/Squiddle.js"></script>
+        <script src="../../RocketScience.js/RocketScience.js"></script>
+        <script src="../releases/current/MO5.js"></script>
+        
+        <script>
+            var monitor, MO5TestLab;
+            
+            monitor = new ROCKET.monitors.HTML();
+            MO5TestLab = new ROCKET.TestLab("MO5.js");
+            
+            monitor.switchOn();
+        </script>
+        
+        <script src="MO5.Queue.test.js"></script>
+        
+        <script>
+            MO5TestLab.run();
+        </script>
+    </body>
+</html>
