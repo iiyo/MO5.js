@@ -1,22 +1,24 @@
 (function (out) {
     
     out.Error = function (msg) {
-        var e = new Error();
+        var e = Error.apply(null, arguments), key;
         
-        Error.call(this);
+        // we need to copy the properties manually since
+        // Javascript's Error constructor ignores the first
+        // parameter used with .call()...
+        for (key in e) {
+            this[key] = e[key];
+        }
         
         this.message = msg;
         this.name = "MO5.Error";
-        
-        if (e.stack) {
-            this.stack = e.stack;
-        }
     };
     
     out.Error.prototype = new Error();
+    out.Error.prototype.constructor = out.Error;
     
-    out.Error.prototype.toString = function () {
-        return "[" + this.name + "] " + this.message;
-    };
+    //out.Error.prototype.toString = function () {
+    //    return "[" + this.name + "] " + this.message;
+    //};
     
 }(MO5));
