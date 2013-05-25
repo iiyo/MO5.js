@@ -5,8 +5,11 @@
     function resolve (queue, value) {
         
         while (queue.hasNext()) {
-            cur = queue.next();
-            setImmediate(function () { cur(value); });
+            setImmediate((function (cur) { 
+                return function () { 
+                    cur(value); 
+                };
+            }(queue.next())));
         }
     }
     
