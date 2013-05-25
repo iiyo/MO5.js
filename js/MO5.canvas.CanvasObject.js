@@ -23,13 +23,9 @@
     
     out.canvas.CanvasObject.prototype.move = function (x, y, args) {
         
-        var dx, dy;
-        
         args = args || {};
-        dx = this.x + x;
-        dy = this.y + y;
         
-        return this.moveTo(dx, dy, args);
+        return this.moveTo(this.x + x, this.y + y, args);
     };
     
     out.canvas.CanvasObject.prototype.moveTo = function (x, y, args) {
