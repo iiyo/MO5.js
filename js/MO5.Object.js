@@ -1,5 +1,7 @@
 (function (out) {
     
+    var propertyTable = {};
+    
     /**
      * The MO5 base type for almost all other types used in MO5.
      * 
@@ -18,7 +20,35 @@
         this.destroyed = false;
         
         Squiddle.inject(this, args.bus);
+        
+        propertyTable[this.id] = {};
     };
+    
+    out.Object.prototype.getProperty = function (key) {
+        
+        if (!propertyTable[this.id] 
+        || !(propertyTable[this.id].hasOwnProperty(key))) {
+            return;
+        }
+        
+        return propertyTable[this.id][key];
+    };
+    
+    out.Object.prototype.setProperty = function (key, value) {
+        
+        if (!propertyTable[this.id]) {
+            return;
+        }
+        
+        propertyTable[this.id][key] = value;
+        
+        this.trigger("propertyChange", {key: key, value: value});
+    }
+    
+    out.Object.prototype.hasProperty = function (key) {
+        return propertyTable[this.id] && 
+            propertyTable[this.id].hasOwnProperty(key);
+    }
     
     out.Object.prototype.connect = function (event1, obj2, event2, async) {
         
@@ -37,10 +67,10 @@
             data = data || null;
             
             if (typeof async !== "undefined" && (async === true || async === false)) {
-                obj2.trigger(info.event, data, async);
+                obj2.trigger(event2, data, async);
             }
             else {
-                obj2.trigger(info.event, data);
+                obj2.trigger(event2, data);
             }
         }
         
@@ -77,6 +107,8 @@
         for (var key in this) {
             this[key] = null;
         }
+        
+        delete propertyTable[id];
         
         this.destroyed = true;
         this.id = id;
