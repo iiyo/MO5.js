@@ -48,6 +48,8 @@
         
         this.callbacks.add(cb);
         this.trigger("updated", null, false);
+        
+        return this;
     };
     
     out.Animation.prototype.isRunning = function () {
