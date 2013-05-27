@@ -67,8 +67,7 @@ window.requestAnimationFrame = (function ()
         window.mozRequestAnimationFrame || 
         window.oRequestAnimationFrame || 
         window.msRequestAnimationFrame || 
-        function (callback)
-        {
+        function (callback) {
             window.setTimeout(callback, 1000 / 60);
         };
 }());
@@ -88,15 +87,19 @@ var MO5 = (function ()
     "use strict";
     
     var out = {
-        timers: {},
         highestId: 0,
-        bus: new Squiddle(),
         defaults: {
             fps: 30,
-            debug: true
+            debug: true,
+            canvas: {
+                width: 640, // default width for canvas elements
+                height: 480 // default height for canvas elements
+            }
         }
     };
 
     return out;
 
 }());
+    
+Squiddle.inject(MO5); // make MO5 object observable
