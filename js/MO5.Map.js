@@ -110,6 +110,16 @@
         return this;
     };
     
+    out.Map.prototype.keys = function () {
+        var keys = [];
+        
+        this.forEach(function (item, key) {
+            keys.push(key);
+        });
+        
+        return keys;
+    };
+    
     out.Map.prototype.clone = function () {
         var clone = new out.Map();
         
