@@ -80,6 +80,17 @@
         return this;
     };
     
+    out.Queue.prototype.reverse = function () {
+        var q = new out.Queue(), len = this.length(), i = len - 1;
+        
+        while (i >= 0) {
+            q.add(this.arr[i]);
+            i -= 1;
+        }
+        
+        return q;
+    };
+    
     out.Queue.prototype.clone = function () {
         return new out.Queue(this.arr.slice());
     };
