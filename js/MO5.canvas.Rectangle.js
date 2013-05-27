@@ -54,20 +54,22 @@
 
         this.color = args.color || "#fff";
         this.borderColor = args.borderColor || "#000";
-        this.borderWidth = args.borderWidth || 0;
+        this.borderWidth = args.borderWidth || 1;
         this.shadowX = args.shadowX || 5;
         this.shadowY = args.shadowY || 5;
         this.shadowBlur = args.shadowBlur || 5;
         this.shadowColor = args.shadowColor || "rgba(0, 0, 0, 0.5)";
         this.hasShadow = args.hasShadow || false;
+        this.width = 100;
+        this.height = 60;
     };
     
     out.canvas.Rectangle.prototype = new out.canvas.CanvasObject();
 
-    out.canvas.Rectangle.prototype.draw = function ()
+    out.canvas.Rectangle.prototype.draw = function (env)
     {
         var self = this,
-            ct = self.canvas.ct,
+            ct = env.context,
             x = self.x,
             y = self.y,
             width = self.width,
