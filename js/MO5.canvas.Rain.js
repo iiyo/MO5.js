@@ -36,45 +36,32 @@
      *                        
      *                        
      */
-    out.canvas.Rain = function (canvas, args)
+    out.canvas.Rain = function (args)
     {
         var self = this;
         
         args = args || {};
         
-        out.canvas.CanvasObject.call(this, canvas, args);
+        out.canvas.CanvasObject.call(this, args);
 
         this.color = args.color || "#fff";
         this.drops = args.drops || 100;
         this.data = null;
         this.speed = args.speed || 800;
-        this.width = args.width || canvas.cv.width * 2;
-        this.height = args.height || canvas.cv.height * 2;
-        this.x = args.x || ((this.width - canvas.cv.width) / 2);
-        this.y = args.y || ((this.height - canvas.cv.height) / 2);
+        this.width = args.width || 800;
+        this.height = args.height || 600;
+        this.x = args.x || 0;
+        this.y = args.y || 0;
         this.lastDrawTime = 0;
-
-        this.canvas.bus.subscribe(
-            function () {
-                self.hide();
-            }, 
-            "mo5.canvas.rain.hideAll"
-        );
-
-        this.canvas.bus.subscribe(
-            function () {
-                self.display();
-            }, 
-            "mo5.canvas.rain.displayAll"
-        );
     };
     
     out.canvas.Rain.prototype = new out.canvas.CanvasObject();
 
-    out.canvas.Rain.prototype.draw = function ()
+    out.canvas.Rain.prototype.draw = function (env)
     {
         var self = this,
-            ct = self.canvas.ct,
+            ct = env.context,
+            cv = env.canvas,
             drops = self.drops,
             i,
             data = self.data,
@@ -104,8 +91,8 @@
             
             for (i = 0; i < drops; ++i) {
                 
-                x = (Math.random() * width - (self.width - self.canvas.cv.width) / 2) | 0;
-                fy = (Math.random() * height - (self.height - self.canvas.cv.height) / 2) | 0;
+                x = (Math.random() * width - (self.width - cv.width) / 2) | 0;
+                fy = (Math.random() * height - (self.height - cv.height) / 2) | 0;
                 ly = (Math.random() * 40 + 5) | 0;
                 
                 data.push({
@@ -125,9 +112,9 @@
             cur = data[i];
             cur.fy += speed;
             
-            if (cur.fy > self.canvas.cv.height + cur.ly) {
-                cur.fy = 0 - (self.height - self.canvas.cv.height) / 2 - cur.ly;
-                cur.x = Math.random() * width - (self.width - self.canvas.cv.width) / 2;
+            if (cur.fy > cv.height + cur.ly) {
+                cur.fy = 0 - (self.height - cv.height) / 2 - cur.ly;
+                cur.x = Math.random() * width - (self.width - cv.width) / 2;
             }
             
             ct.moveTo(cur.x, cur.fy);
