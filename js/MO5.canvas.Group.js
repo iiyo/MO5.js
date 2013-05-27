@@ -17,14 +17,18 @@
         }
         
         this.objects.set(+obj, obj);
+        
+        return this;
     };
     
     out.canvas.Group.prototype.remove = function (obj) {
         this.objects.remove(+obj);
+        return this;
     };
     
     out.canvas.Group.prototype.forEach = function (cb) {
         this.objects.forEach(cb);
+        return this;
     };
     
     out.canvas.Group.prototype.callMethod = function (name, args) {
@@ -37,13 +41,17 @@
             
             item[name].apply(item[name], args);
         });
+        
+        return this;
     };
     
-    out.canvas.Group.prototype.setProperty = function (name, value) {
+    out.canvas.Group.prototype.applyProperty = function (name, value) {
         
         this.objects.forEach(function (item) {
             item[name] = value;
         });
+        
+        return this;
     };
     
 }(MO5));
