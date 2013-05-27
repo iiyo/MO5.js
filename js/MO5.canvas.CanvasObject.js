@@ -2,7 +2,7 @@
     
     out.canvas = out.canvas || {};
 
-    out.canvas.CanvasObject = function (canvas, args) {
+    out.canvas.CanvasObject = function (args) {
         args = args || {};
         
         out.Object.call(this);
@@ -11,7 +11,6 @@
         this.y = args.y || 0;
         this.width = args.width || 1;
         this.height = args.height || 1;
-        this.canvas = canvas;
         this.layer = args.layer || 0;
         this.alpha = args.alpha || 1;
         this.rotation = args.rotation || 0;
@@ -38,7 +37,7 @@
             out.transform(
                 function (v)
                 {
-                    self.x = v;
+                    self.x = v | 0;
                 },
                 this.x,
                 x,
@@ -48,7 +47,7 @@
             out.transform(
                 function (v)
                 {
-                    self.y = v;
+                    self.y = v | 0;
                 },
                 this.y,
                 y,
@@ -97,24 +96,6 @@
         );
     };
     
-    out.canvas.CanvasObject.prototype.display = function () {
-        
-        var self = this;
-        
-        this.canvas.addCallback(
-            this.id, 
-            function () {
-                self.draw();
-            }, 
-            this.layer || 0, 
-            this
-        );
-    };
-    
-    out.canvas.CanvasObject.prototype.hide = function () {
-        this.canvas.removeCallback(this.id);
-    };
-    
     out.canvas.CanvasObject.prototype.getCenter = function () {
         
         var x = (this.x + (this.width / 2)),
@@ -123,9 +104,15 @@
         return new out.Point(x, y);
     };
     
+    out.canvas.CanvasObject.prototype.isAtOffset = function (x, y) {
+        return x >= this.x && x <= this.x + this.width &&
+            y >= this.y && y <= this.y + this.height;
+    };
+    
     out.canvas.CanvasObject.prototype.change = function (key, value) {
         this[key] = value;
         this.updated = true;
+        this.trigger("updated");
     };
     
 }(MO5));

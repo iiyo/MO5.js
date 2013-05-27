@@ -2,6 +2,26 @@
     
     out.canvas = out.canvas || {};
     
+    function draw (self, lastDrawingTime) {
+        
+        if ((Date.now() - lastDrawingTime) > (1000 / self.fps)) {
+            self.ct.clearRect(0, 0, self.cv.width, self.cv.height);
+            
+            self.layers.forEach(function (layer) {
+                layer.draw({
+                    canvas: self.cv,
+                    context: self.ct
+                });
+            });
+            
+            lastDrawingTime = Date.now();
+        }
+        
+        if (!self.stopped) {
+            requestAnimationFrame(function () { draw(self, lastDrawingTime); });
+        }
+    }
+    
     /**
      * Constructor function for an object to wrap the HTML5 canvas 
      * and provide an animation loop.
@@ -21,213 +41,129 @@
 
         out.Object.call(this);
         
-        var self = this, id = args.id || null, isFrozen = false, lastDrawingTime = 0;
+        var self = this, id = args.cssid || null, lastDrawingTime = 0, lastObject;
         
         if (id === null)
         {
             this.cv = document.createElement("canvas");
             this.cv.setAttribute("id", "MO5Canvas" + this.id);
+            document.body.appendChild(this.cv);
         }
         else
         {
             this.cv = document.getElementById(id);
         }
         
+        this.layers = new MO5.List();
+        
         this.ct = this.cv.getContext("2d");
         this.fps = args.fps || out.defaults.fps;
-        this.tbf = 1 / this.fps;
-        this.time = 0;
-        this.sine = 0;
-        this.width = args.width || 800;
-        this.height = args.height || 450;
+        this.width = args.width || out.defaults.canvas.width;
+        this.height = args.height || out.defaults.canvas.height;
         this.functions = [];
         this.functionsByKey = {};
         this.functionsByPriority = [];
         this.scale = args.scale || false;
         this.scaleX = args.scaleX || 1;
         this.scaleY = args.scaleY || 1;
-        this.frozen = false;
-        this.temp = document.createElement("canvas");
         this.stopped = true;
-        this.bus = args.bus || out.bus;
 
         this.cv.width = this.width;
         this.cv.height = this.height;
-        this.temp.width = this.width;
-        this.temp.height = this.height;
         document.body.appendChild(this.cv);
-
-        this.draw = function () {
+        
+        function makePointerFn (type) {
+            return function (ev) {
             
-            var tbf, env, len, i, time, funcs, cv, ct;
-            
-            tbf = self.tbf;
-            self.time += tbf;
-            time = self.time;
-            funcs = self.functions;
-            cv = self.cv;
-            ct = self.ct;
-            
-            if ((Date.now() - lastDrawingTime) > (1000 / self.fps)) {
-                
-                if (self.frozen === true && isFrozen === true) {
-                    ct.drawImage(self.temp, 0, 0);
-                    
-                    return;
-                }
-                else if (self.frozen === false && isFrozen === true) {
-                    isFrozen = false;
-                }
-                
-                self.sine = (Math.sin(time) + 1) / 2;
-                
-                env = {
-                    context: ct,
-                    canvas: cv,
-                    fps: self.fps,
-                    tbf: tbf,
-                    time: time,
-                    sine: self.sine
+                var x = ev.pageX - self.cv.offsetLeft;
+                var y = ev.pageY - self.cv.offsetTop;
+                var obj = self.objectAtOffset(x, y);
+                var evObj = {
+                    event: ev, 
+                    x: x,
+                    y: y
                 };
                 
-                ct.clearRect(0, 0, cv.width, cv.height);
-                
-                for (i = 0, len = funcs.length; i < len; ++i)
-                {
-                    funcs[i].callback(env);
+                if (obj) {
+                    obj.trigger(type, evObj, false);
                 }
                 
-                if (self.frozen === true)
-                {
-                    self.temp.clearRect(0, 0, self.width, self.height);
-                    self.temp.drawImage(cv, 0, 0);
-                    isFrozen = true;
+                if (lastObject !== obj) {
+                    if (lastObject) {
+                        lastObject.trigger("mouseout", evObj);
+                    }
+                    if (obj) {
+                        obj.trigger("mousein", evObj);
+                    }
                 }
                 
-                lastDrawingTime = Date.now();
-            }
-            
-            if (self.stopped === false)
-            {
-                requestAnimationFrame(self.draw);
-            }
-        };
+                lastObject = obj;
+                
+                self.trigger(type, evObj, false);
+            };
+        }
+        
+        this.cv.addEventListener("click", makePointerFn("click"));
+        this.cv.addEventListener("mousemove", makePointerFn("mousemove"));
+
     };
     
     out.canvas.Canvas.prototype = new out.Object();
-
-    /**
-     * Adds a drawing function to the Canvas. The function will be called
-     * on each animation loop iteration.
-     * 
-     * @param [String] key A key to identify the drawing function.
-     * @param [Function] cb The drawing function.
-     * @
-     * param [Number] (optional) The priority that determines the order in which
-     *    drawing functions will be executed. The higher the number,
-     *    the later the drawing function will be called. That means
-     *    the things that should be drawn in the foreground should
-     *    have the highest priority. Default: 0.
-     */
-    out.canvas.Canvas.prototype.addCallback = function (key, cb, priority)
-    {
-        var fbp, func;
-        
-        fbp = this.functionsByPriority,
-        
-        func = {
-            key: key,
-            callback: cb,
-            priority: priority || 0
-        };
-        
-        if (typeof fbp[priority] === 'undefined' || fbp[priority] === null)
-        {
-            this.functionsByPriority[priority] = [];
+    
+    out.canvas.Canvas.prototype.addLayer = function (layer) {
+        if (!(layer instanceof out.canvas.Layer)) {
+            throw new out.Error("Parameter 1 must be an instance of canvas.Layer.");
         }
         
-        this.functionsByPriority[priority].push(func);
-        this.functionsByKey[key] = func;
-        this.rebuildFunctionQueue();
+        this.layers.append(layer);
+        
+        return this;
     };
-
-    /**
-     * Rebuilds the function queue. This function is not meant 
-     * to be used by MO5 users and should be considered private.
-     */
-    out.canvas.Canvas.prototype.rebuildFunctionQueue = function ()
-    {
-        var len, cur, i, j, plen;
+    
+    out.canvas.Canvas.prototype.objectAtOffset = function (x, y) {
+        var q = this.layers.toQueue().reverse(), obj = null, layer, cur;
         
-        this.functions = [];
-        len = this.functionsByPriority.length;
-        
-        for (i = 0; i < len; ++i)
-        {
-            if (typeof this.functionsByPriority[i] === "undefined")
-            {
-                continue;
-            }
+        while (q.hasNext()) {
+            layer = q.next();
             
-            cur = this.functionsByPriority[i];
-            plen = cur.length;
+            cur = layer.objectAtOffset(x, y);
             
-            for (j = 0; j < plen; ++j)
-            {
-                this.functions.push(cur[j]);
+            if (cur) {
+                obj = cur;
+                break;
             }
         }
+        
+        return obj;
     };
-
-    /**
-     * Removes a drawing function from the Canvas queue.
-     * @param String key The key to identify the drawing function.
-     */
-    out.canvas.Canvas.prototype.removeCallback = function (key)
-    {
-        var func, priority, bucket, len, i;
+    
+    out.canvas.Canvas.prototype.objectsAtOffset = function (x, y) {
+        var q = this.layers.toQueue().reverse(), objects = [], layer, cur;
         
-        if (typeof this.functionsByKey[key] === "undefined")
-        {
-            return;
-        }
-        
-        func = this.functionsByKey[key],
-        priority = func.priority,
-        bucket = this.functionsByPriority[priority],
-        len = bucket.length;
-        
-        for (i = 0; i < len; i += 1)
-        {
-            //console.log("bucket[i]: ", bucket[i], i, key);
+        while (q.hasNext()) {
+            layer = q.next();
             
-            if (bucket[i].key !== key)
-            {
-                continue;
+            cur = layer.objectsAtOffset(x, y);
+            
+            if (cur) {
+                cur.forEach(function (item) { objects.push(item); });
             }
-            
-            this.functionsByPriority[priority].splice(i, 1);
         }
         
-        this.rebuildFunctionQueue();
-        delete this.functionsByKey[key];
+        return objects;
     };
-
-    /**
-     * Starts the animation loop.
-     */
-    out.canvas.Canvas.prototype.start = function ()
-    {
+    
+    out.canvas.Canvas.prototype.activate = function () {
         this.stopped = false;
-        this.draw();
+        this.loop();
     };
-
-    /**
-     * Stops the animation loop.
-     */
-    out.canvas.Canvas.prototype.stop = function ()
-    {
+    
+    out.canvas.Canvas.prototype.deactivate = function () {
         this.stopped = true;
+    };
+    
+    out.canvas.Canvas.prototype.loop = function () {
+        draw(this, 0);
     };
 
     /**
@@ -281,7 +217,8 @@
             hv = this.height,
             wv = this.width;
 
-        el.setAttribute('style', 'position: absolute; left: ' + ((ww - wv) / 2) + 'px; top: ' + ((wh - hv) / 2) + 'px;');
+        el.setAttribute('style', 'position: absolute; left: ' + 
+            ((ww - wv) / 2) + 'px; top: ' + ((wh - hv) / 2) + 'px;');
     };
     
 }(MO5));
