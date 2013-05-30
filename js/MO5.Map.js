@@ -1,5 +1,15 @@
 (function (out) {
     
+    var prefix = "MO5Map";
+    
+    function makeKey (k) {
+        return prefix + k;
+    }
+    
+    function revokeKey (k) {
+        return k.replace(new RegExp(prefix), "");
+    }
+    
     out.Map = function () {
         
         out.Object.call(this);
@@ -15,11 +25,16 @@
         return this.count;
     };
     
-    out.Map.prototype.set = function (key, value) {
+    out.Map.prototype.set = function (k, value) {
         
-        var self = this, whenDestroyed;
+        var self = this, whenDestroyed, key = makeKey(k), whenKeyDestroyed;
         
-        if (!key) {
+        function whenDestroyed () {
+            delete self.items[key];
+            self.count -= 1;
+        }
+            
+        if (!k) {
             throw new out.Error("MO5.Map keys cannot be falsy.");
         }
         
@@ -30,18 +45,35 @@
         if (value && value instanceof out.Object) {
             
             if (value.destroyed) {
-                throw new out.Error("Trying to add an MO5.Object that has already been destroyed.");
+                throw new out.Error("Trying to add an MO5.Object that has " +
+                    "already been destroyed.");
             }
             
-            whenDestroyed = function () {
-                delete self.items[key];
-                self.count -= 1;
-            };
-            
             value.subscribe(whenDestroyed, "destroyed");
+        }
+        
+        if (k instanceof out.Object) {
+            
+            if (k.destroyed) {
+                throw new out.Error("Trying to use an MO5.Object as key that " +
+                    "has already been destroyed.");
+            }
+            
+            k.subscribe(whenDestroyed, "destroyed");
+            
+        }
+        
+        if (value && value instanceof out.Object || k instanceof out.Object) {
             
             this.unsubscribers[key] = function () {
-                value.unsubscribe(whenDestroyed, "destroyed");
+                
+                if (value instanceof out.Object) {
+                    value.unsubscribe(whenDestroyed, "destroyed");
+                }
+                
+                if (k instanceof out.Object) {
+                    k.unsubscribe(whenDestroyed, "destroyed");
+                }
             };
         }
         
@@ -54,7 +86,9 @@
         return this;
     };
     
-    out.Map.prototype.get = function (key) {
+    out.Map.prototype.get = function (k) {
+        
+        var key = makeKey(k);
         
         if (!this.items.hasOwnProperty(key)) {
             return undefined;
@@ -63,7 +97,9 @@
         return this.items[key];
     };
     
-    out.Map.prototype.remove = function (key) {
+    out.Map.prototype.remove = function (k) {
+        
+        var key = makeKey(k);
         
         if (!this.has(key)) {
             throw new out.Error("Trying to remove an unknown key from an MO5.Map.");
@@ -83,7 +119,10 @@
         return this;
     };
     
-    out.Map.prototype.has = function (key) {
+    out.Map.prototype.has = function (k) {
+        
+        var key = makeKey(k);
+        
         return this.items.hasOwnProperty(key);
     };
     
@@ -104,17 +143,18 @@
         }
         
         for (var key in this.items) {
-            fn(this.items[key], key, this);
+            fn(this.items[key], revokeKey(key), this);
         }
         
         return this;
     };
     
     out.Map.prototype.keys = function () {
+        
         var keys = [];
         
         this.forEach(function (item, key) {
-            keys.push(key);
+            keys.push(revokeKey(key));
         });
         
         return keys;
@@ -124,7 +164,7 @@
         var clone = new out.Map();
         
         this.forEach(function (item, key) {
-            clone.set(key, item);
+            clone.set(revokeKey(key), item);
         });
         
         return clone;
