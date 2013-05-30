@@ -12,8 +12,9 @@
     
     out.canvas.Group.prototype.add = function (obj) {
         
-        if (!(obj instanceof out.canvas.CanvasObject)) {
-            throw new out.Error("Parameter 1 must be an instance of CanvasObject.");
+        if (!(obj instanceof out.canvas.Object)) {
+            throw new out.Error("Parameter 1 must be an instance of " +
+                "MO5.canvas.Object.");
         }
         
         this.objects.set(+obj, obj);

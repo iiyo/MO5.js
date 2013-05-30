@@ -124,7 +124,7 @@
      * anymore and should be considered dead.
      * 
      * All users of an MO5.Object should hook to the destroyed() event and delete
-     * there references to the MO5.Object when its destroyed() event is emitted.
+     * their references to the MO5.Object when its destroyed() event is emitted.
      */
     out.Object.prototype.destroy = function () {
         

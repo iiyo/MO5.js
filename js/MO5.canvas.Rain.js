@@ -42,7 +42,7 @@
         
         args = args || {};
         
-        out.canvas.CanvasObject.call(this, args);
+        out.canvas.Object.call(this, args);
 
         this.color = args.color || "#fff";
         this.drops = args.drops || 100;
@@ -55,7 +55,7 @@
         this.lastDrawTime = 0;
     };
     
-    out.canvas.Rain.prototype = new out.canvas.CanvasObject();
+    out.canvas.Rain.prototype = new out.canvas.Object();
 
     out.canvas.Rain.prototype.draw = function (env)
     {

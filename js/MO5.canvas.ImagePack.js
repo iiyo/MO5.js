@@ -30,7 +30,7 @@
     {
         args = args || {};
         
-        out.canvas.CanvasObject.call(this, canvas, args);
+        out.canvas.Object.call(this, canvas, args);
 
         if (!(this instanceof out.canvas.ImagePack))
         {
@@ -47,7 +47,7 @@
         this.updated = true;
     };
 
-    out.canvas.ImagePack.prototype = new out.canvas.CanvasObject();
+    out.canvas.ImagePack.prototype = new out.canvas.Object();
 
     /**
      * Drawing callback function for ImagePack objects.

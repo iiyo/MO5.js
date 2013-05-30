@@ -45,7 +45,7 @@
     {
         args = args || {};
         
-        out.canvas.CanvasObject.call(this, canvas, args);
+        out.canvas.Object.call(this, canvas, args);
 
         if (!(this instanceof out.canvas.Rectangle))
         {
@@ -64,7 +64,7 @@
         this.height = 60;
     };
     
-    out.canvas.Rectangle.prototype = new out.canvas.CanvasObject();
+    out.canvas.Rectangle.prototype = new out.canvas.Object();
 
     out.canvas.Rectangle.prototype.draw = function (env)
     {

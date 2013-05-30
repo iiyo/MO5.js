@@ -60,7 +60,7 @@
     {
         args = args || {};
         
-        out.canvas.CanvasObject.call(this, canvas, args);
+        out.canvas.Object.call(this, canvas, args);
 
         if (!(this instanceof out.canvas.TextBox))
         {
@@ -82,7 +82,7 @@
         this.updated = true;
     };
 
-    out.canvas.TextBox.prototype = new out.canvas.CanvasObject();
+    out.canvas.TextBox.prototype = new out.canvas.Object();
 
     out.canvas.TextBox.prototype.draw = function ()
     {

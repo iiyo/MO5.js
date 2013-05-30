@@ -1,7 +1,7 @@
 (function (out) {
     
     var MSG_EXPECTED_CANVAS_OBJECT = "Parameter 1 is expected to be of type " +
-        "MO5.canvas.CanvasObject.";
+        "MO5.canvas.Object.";
     
     out.canvas = out.canvas || {};
     
@@ -59,7 +59,7 @@
         
         var interactiveObjects = this.interactiveObjects;
         
-        if (!(item instanceof out.canvas.CanvasObject)) {
+        if (!(item instanceof out.canvas.Object)) {
             throw new out.Error(MSG_EXPECTED_CANVAS_OBJECT);
         }
         
@@ -94,7 +94,7 @@
     
     out.canvas.Layer.prototype.remove = function (item) {
         
-        if (!(item instanceof out.canvas.CanvasObject)) {
+        if (!(item instanceof out.canvas.Object)) {
             throw new out.Error(MSG_EXPECTED_CANVAS_OBJECT);
         }
         
@@ -110,7 +110,7 @@
     
     out.canvas.Layer.prototype.has = function (item) {
         
-        if (!(item instanceof out.canvas.CanvasObject)) {
+        if (!(item instanceof out.canvas.Object)) {
             throw new out.Error(MSG_EXPECTED_CANVAS_OBJECT);
         }
         
