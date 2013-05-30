@@ -1,6 +1,14 @@
 (function (out) {
     
-    var propertyTable = {};
+    var propertyTable = {}, prefix = "MO5Object";
+    
+    function makeKey (key) {
+        return prefix + key;
+    }
+    
+    function revokeKey (key) {
+        return key.replace(new RegExp(prefix), "");
+    }
     
     /**
      * The MO5 base type for almost all other types used in MO5.
@@ -26,28 +34,45 @@
     
     out.Object.prototype.getProperty = function (key) {
         
+        var k = makeKey(key);
+        
         if (!propertyTable[this.id] 
-        || !(propertyTable[this.id].hasOwnProperty(key))) {
+        || !(propertyTable[this.id].hasOwnProperty(k))) {
             return;
         }
         
-        return propertyTable[this.id][key];
+        return propertyTable[this.id][k];
     };
     
     out.Object.prototype.setProperty = function (key, value) {
+        
+        var k = makeKey(key);
         
         if (!propertyTable[this.id]) {
             return;
         }
         
-        propertyTable[this.id][key] = value;
+        propertyTable[this.id][k] = value;
         
         this.trigger("propertyChange", {key: key, value: value});
     }
     
     out.Object.prototype.hasProperty = function (key) {
+        
+        var k = makeKey(key);
+        
         return propertyTable[this.id] && 
-            propertyTable[this.id].hasOwnProperty(key);
+            propertyTable[this.id].hasOwnProperty(k);
+    }
+    
+    out.Object.prototype.getPropertyKeys = function () {
+        var arr = [];
+        
+        for (var key in propertyTable[this.id]) {
+            arr.push(revokeKey(key));
+        }
+        
+        return arr;
     }
     
     out.Object.prototype.connect = function (event1, obj2, event2, async) {
