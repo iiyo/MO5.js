@@ -114,6 +114,10 @@
         return "" + this.id;
     };
     
+    out.Object.prototype.valueOf = function () {
+        return this.id;
+    }
+    
     /**
      * Emits the destroyed() event and deletes all of the instances properties.
      * After this method has been called on an MO5.Object, it can not be used
@@ -137,6 +141,10 @@
         
         this.destroyed = true;
         this.id = id;
+        
+        delete this["toString"];
+        delete this["valueOf"];
+        
     };
     
 }(MO5));
