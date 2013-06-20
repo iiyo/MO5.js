@@ -51,6 +51,9 @@
         return this.arr.length;
     };
     
+    /**
+     * Adds an item to the back of the queue.
+     */
     out.Queue.prototype.add = function (val) {
         var self = this, index = this.arr.length;
         
@@ -70,6 +73,10 @@
         return this;
     };
     
+    /**
+     * Replaces all items of the queue with the items in the first parameter.
+     * @param arr An array containing the new items.
+     */
     out.Queue.prototype.replace = function (arr) {
         if (!(arr instanceof Array)) {
             throw new out.Error("Parameter 1 is expected to be of type Array.");
@@ -84,6 +91,9 @@
         return this;
     };
     
+    /**
+     * Removes the front of the queue and returns it.
+     */
     out.Queue.prototype.next = function () {
         
         if (!this.hasNext()) {
@@ -102,10 +112,24 @@
         return ret;
     };
     
+    /**
+     * Returns the front item of the queue without removing it.
+     */
+    out.Queue.prototype.peak = function () {
+        return this.isEmpty() ? undefined : this.arr[0];
+    };
+    
+    out.Queue.prototype.isEmpty = function () {
+        return !this.hasNext();
+    };
+    
     out.Queue.prototype.hasNext = function () {
         return this.arr.length > 0;
     };
     
+    /**
+     * Removes all items from the queue.
+     */
     out.Queue.prototype.clear = function () {
         this.arr = [];
         this.trigger("updated");
@@ -114,6 +138,9 @@
         return this;
     };
     
+    /**
+     * Reverses the queue's order so that the first item becomes the last.
+     */
     out.Queue.prototype.reverse = function () {
         var q = new out.Queue(), len = this.length(), i = len - 1;
         
@@ -125,6 +152,9 @@
         return q;
     };
     
+    /**
+     * Returns a shallow copy of the queue.
+     */
     out.Queue.prototype.clone = function () {
         return new out.Queue(this.arr.slice());
     };
