@@ -36,11 +36,11 @@
     
     var propertyTable = {}, prefix = "MO5Object";
     
-    function makeKey (key) {
+    function externalKeyToInternalKey (key) {
         return prefix + key;
     }
     
-    function revokeKey (key) {
+    function internalKeyToExternalKey (key) {
         return key.replace(new RegExp(prefix), "");
     }
     
@@ -68,42 +68,42 @@
     
     out.Object.prototype.getProperty = function (key) {
         
-        var k = makeKey(key);
+        var internalKey = externalKeyToInternalKey(key);
         
         if (!propertyTable[this.id] 
-        || !(propertyTable[this.id].hasOwnProperty(k))) {
+        || !(propertyTable[this.id].hasOwnProperty(internalKey))) {
             return;
         }
         
-        return propertyTable[this.id][k];
+        return propertyTable[this.id][internalKey];
     };
     
     out.Object.prototype.setProperty = function (key, value) {
         
-        var k = makeKey(key);
+        var internalKey = externalKeyToInternalKey(key);
         
         if (!propertyTable[this.id]) {
             return;
         }
         
-        propertyTable[this.id][k] = value;
+        propertyTable[this.id][internalKey] = value;
         
         this.trigger("propertyChange", {key: key, value: value});
     }
     
     out.Object.prototype.hasProperty = function (key) {
         
-        var k = makeKey(key);
+        var internalKey = externalKeyToInternalKey(key);
         
         return propertyTable[this.id] && 
-            propertyTable[this.id].hasOwnProperty(k);
+            propertyTable[this.id].hasOwnProperty(internalKey);
     }
     
     out.Object.prototype.getPropertyKeys = function () {
         var arr = [];
         
         for (var key in propertyTable[this.id]) {
-            arr.push(revokeKey(key));
+            arr.push(internalKeyToExternalKey(key));
         }
         
         return arr;
@@ -117,7 +117,8 @@
         event2 = event2 || "*";
         
         if (!obj2 || !(obj2 instanceof out.Object)) {
-            out.fail(new out.Error("Cannot connect events: Parameter 3 is expected to be of type MO5.Object."));
+            out.fail(new out.Error("Cannot connect events: Parameter 3 is " +
+                "expected to be of type MO5.Object."));
             return this;
         }
         
@@ -125,7 +126,8 @@
             
             data = data || null;
             
-            if (typeof async !== "undefined" && (async === true || async === false)) {
+            if (typeof async !== "undefined" 
+            && (async === true || async === false)) {
                 obj2.trigger(event2, data, async);
             }
             else {
