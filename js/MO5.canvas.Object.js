@@ -101,9 +101,9 @@
             out.transform(
                 function (v)
                 {
-                    self.opacity = v;
+                    self.alpha = v;
                 },
-                this.opacity,
+                this.alpha,
                 1,
                 args
             )
@@ -121,9 +121,9 @@
             out.transform(
                 function (v)
                 {
-                    self.opacity = v;
+                    self.alpha = v;
                 },
-                this.opacity,
+                this.alpha,
                 0,
                 args
             )
@@ -147,6 +147,22 @@
         this[key] = value;
         this.updated = true;
         this.trigger("updated");
+    };
+    
+    out.canvas.Object.prototype.rotate = function (deg, args) {
+        
+        var self = this;
+        
+        args = args || {};
+        
+        return MO5.transform(function (v) {
+            self.rotation = v;
+        }, this.rotation, this.rotation + deg, args);
+    };
+    
+    out.canvas.Object.prototype.setPivot = function (xOffset, yOffset) {
+        this.pivotX = xOffset;
+        this.pivotY = yOffset;
     };
     
 }(MO5));
