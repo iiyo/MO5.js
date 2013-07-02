@@ -34,12 +34,17 @@
 
 (function (out) {
     
-    out.canvas = out.canvas || {};
+    var mousePosition = {x: null, y: null};
+    
+    function timeBetweenFramesReached (self, lastDrawingTime) {
+        return (Date.now() - lastDrawingTime) > (1000 / self.fps);
+    }
     
     function draw (self, lastDrawingTime) {
         
-        if ((Date.now() - lastDrawingTime) > (1000 / self.fps)) {
-            self.ct.clearRect(0, 0, self.cv.width, self.cv.height);
+        if (timeBetweenFramesReached(self, lastDrawingTime)) {
+            
+            self.clear();
             
             self.layers.forEach(function (layer) {
                 layer.draw({
@@ -56,35 +61,34 @@
         }
     }
     
+    out.canvas = out.canvas || {};
+    
     /**
-     * Constructor function for an object to wrap the HTML5 canvas 
-     * and provide an animation loop.
+     * Wraps the HTML5 canvas and provides an animation loop.
      * 
-     * @param Object args Optional arguments for the Canvas.
+     * @param Object args Optional arguments
      *     Properties:
      *     - [String] id The HTML ID of a canvas element to use.
-     *     - [Number] width The width of the canvas element in pixels. Default: 800.
-     *     - [Number] height The height of the canvas element in pixels. Default: 450.
+     *     - [Number] width Canvas element width in pixels. Default: 800.
+     *     - [Number] height Canvas element height in pixels. Default: 450.
      *     - [Boolean] scale Should the canvas be scaled? Default: false.
      *     - [Number] scaleX The scale factor on the x axis. Default: 1.
      *     - [Number] scaleY The scale factor on the y axis. Default: 1.
      */
-    out.canvas.Canvas = function (args)
-    {
+    out.canvas.Canvas = function (args) {
+        
         args = args || {};
 
         out.Object.call(this);
         
         var self = this, id = args.cssid || null, lastDrawingTime = 0, lastObject;
         
-        if (id === null)
-        {
+        if (id === null) {
             this.cv = document.createElement("canvas");
             this.cv.setAttribute("id", "MO5Canvas" + this.id);
             document.body.appendChild(this.cv);
         }
-        else
-        {
+        else {
             this.cv = document.getElementById(id);
         }
         
@@ -118,20 +122,22 @@
                     y: y
                 };
                 
-                if (obj) {
-                    obj.trigger(type, evObj, false);
-                }
-                
                 if (lastObject !== obj) {
+                    
                     if (lastObject) {
-                        lastObject.trigger("mouseout", evObj);
+                        lastObject.trigger("mouseout", evObj, true);
                     }
+                    
                     if (obj) {
-                        obj.trigger("mousein", evObj);
+                        obj.trigger("mouseover", evObj, false);
                     }
                 }
                 
                 lastObject = obj;
+                
+                if (obj) {
+                    obj.trigger(type, evObj, false);
+                }
                 
                 self.trigger(type, evObj, false);
             };
@@ -139,12 +145,58 @@
         
         this.cv.addEventListener("click", makePointerFn("click"));
         this.cv.addEventListener("mousemove", makePointerFn("mousemove"));
+        
+        this.cv.addEventListener("mousemove", function (ev) {
+            mousePosition.x = ev.pageX - self.cv.offsetLeft;
+            mousePosition.y = ev.pageY - self.cv.offsetTop;
+        });
+        
+        this.cv.addEventListener("mousemove", function mouseMoveFn () {
+            
+            var stop = false, handle;
+        
+            function delegateMousePosition () {
+                
+                var evObj = {x: mousePosition.x, y: mousePosition.y};
+                
+                if (stop) {
+                    return;
+                }
+                
+                var obj = self.objectAtOffset(evObj.x, evObj.y);
+            
+                if (obj) {
+                    obj.trigger("hover", evObj, false);
+                }
+                
+                lastObject = obj;
+                
+                handle = setTimeout(delegateMousePosition, 20);
+            }
+            
+            function stopListener () {
+                stop = true;
+                clearTimeout(handle);
+                self.cv.addEventListener("mousemove", mouseMoveFn);
+                self.cv.removeEventListener("mouseout", stopListener);
+            }
+            
+            self.cv.removeEventListener("mousemove", mouseMoveFn);
+            self.cv.addEventListener("mouseout", stopListener);
+            
+            delegateMousePosition();
+        });
 
     };
     
     out.canvas.Canvas.prototype = new out.Object();
     
+    out.canvas.Canvas.prototype.clear = function () {
+        this.ct.clearRect(0, 0, this.cv.width, this.cv.height);
+    };
+    
     out.canvas.Canvas.prototype.addLayer = function (layer) {
+        
         if (!(layer instanceof out.canvas.Layer)) {
             throw new out.Error("Parameter 1 must be an instance of canvas.Layer.");
         }
@@ -155,36 +207,40 @@
     };
     
     out.canvas.Canvas.prototype.objectAtOffset = function (x, y) {
-        var q = this.layers.toQueue().reverse(), obj = null, layer, cur;
         
-        while (q.hasNext()) {
-            layer = q.next();
+        var queueOfLayers = this.layers.toQueue().reverse();
+        var objectToBeReturned = null, layer, currentCanvasObject;
+        
+        while (queueOfLayers.hasNext()) {
             
-            cur = layer.objectAtOffset(x, y);
+            currentCanvasObject = queueOfLayers.next().objectAtOffset(x, y);
             
-            if (cur) {
-                obj = cur;
+            if (currentCanvasObject) {
+                objectToBeReturned = currentCanvasObject;
                 break;
             }
         }
         
-        return obj;
+        return objectToBeReturned;
     };
     
     out.canvas.Canvas.prototype.objectsAtOffset = function (x, y) {
-        var q = this.layers.toQueue().reverse(), objects = [], layer, cur;
         
-        while (q.hasNext()) {
-            layer = q.next();
+        var queueOfLayers = this.layers.toQueue().reverse();
+        var objectsToBeReturned = [], currentCanvasObject;
+        
+        while (queueOfLayers.hasNext()) {
             
-            cur = layer.objectsAtOffset(x, y);
+            currentCanvasObject = queueOfLayers.next().layer.objectsAtOffset(x, y);
             
-            if (cur) {
-                cur.forEach(function (item) { objects.push(item); });
+            if (currentCanvasObject) {
+                currentCanvasObject.forEach(function (item) {
+                    objectsToBeReturned.push(item);
+                });
             }
         }
         
-        return objects;
+        return objectsToBeReturned;
     };
     
     out.canvas.Canvas.prototype.activate = function () {
@@ -207,52 +263,42 @@
      *     than the canvas?
      *     Default: false
      */
-    out.canvas.Canvas.prototype.fitToWindow = function (onlyIfSmaller)
-    {
-        var dim = out.tools.getWindowDimensions(),
-            el = this.cv,
-            ww = dim.width,
-            wh = dim.height,
-            ratio = this.width / this.height,
-            hv = ww / ratio,
-            wv = wh * ratio,
-            newRatio = ww / wh;
+    out.canvas.Canvas.prototype.fitToWindow = function () {
         
-        onlyIfSmaller = onlyIfSmaller || false;
+        var windowDimensions = out.tools.getWindowDimensions(),
+            canvasElement = this.cv,
+            windowWidth = windowDimensions.width,
+            windowHeight = windowDimensions.height,
+            ratio = this.width / this.height,
+            canvasHeight = windowWidth / ratio,
+            canvasWidth = windowHeight * ratio,
+            newRatio = windowWidth / windowHeight;
 
-        if (onlyIfSmaller === true && ww >= this.width && wh >= this.height)
-        {
-            return;
+        if (ratio < newRatio) {
+            canvasHeight = windowHeight;
+        }
+        else {
+            canvasWidth = windowWidth;
         }
 
-        if (ratio < newRatio)
-        {
-            hv = wh;
-        }
-        else
-        {
-            wv = ww;
-        }
-
-        el.setAttribute('style', ' width: ' + wv + 'px; height: ' + hv + 
-            'px; margin: auto; position: absolute;' + ' left: ' + ((ww - wv) / 2) + 
-            'px; top: ' + ((wh - hv) / 2) + 'px;');
+        el.setAttribute('style', ' width: ' + canvasWidth + 'px; height: ' + 
+            canvasHeight + 'px; margin: auto; position: absolute;' + ' left: ' + 
+            ((windowWidth - canvasWidth) / 2) + 
+            'px; top: ' + ((windowHeight - canvasHeight) / 2) + 'px;');
     };
 
-    /**
-     * Moves the canvas to the center of the browser window.
-     */
-    out.canvas.Canvas.prototype.center = function ()
-    {
-        var dim = out.tools.getWindowDimensions(),
-            el = this.cv,
-            ww = dim.width,
-            wh = dim.height,
-            hv = this.height,
-            wv = this.width;
+    out.canvas.Canvas.prototype.moveToWindowCenter = function () {
+        
+        var windowDimensions = out.tools.getWindowDimensions(),
+            canvasElement = this.cv,
+            windowWidth = windowDimensions.width,
+            windowHeight = windowDimensions.height,
+            canvasHeight = this.height,
+            canvasWidth = this.width;
 
         el.setAttribute('style', 'position: absolute; left: ' + 
-            ((ww - wv) / 2) + 'px; top: ' + ((wh - hv) / 2) + 'px;');
+            ((windowWidth - canvasWidth) / 2) + 'px; top: ' + 
+            ((windowHeight - canvasHeight) / 2) + 'px;');
     };
     
 }(MO5));
