@@ -38,7 +38,7 @@
     
     out.dom.Element = function (args) {
         
-        var element;
+        var element, self = this;
         
         args = args || {};
         
@@ -47,10 +47,36 @@
         this.parent = args.parent || document.body;
         this.nodeType = args.nodeType || "div";
         this.element = args.element || document.createElement(this.nodeType);
+        
+        wrapElement(this, this.element);
+        
+        out.dom.Element.propertiesToExclude.forEach(function (property) {
+            delete self[property];
+        });
     };
+    
+    // Properties that should not shadow the DOM element's properties.
+    // If you want to add a method with the same name as a DOM element's
+    // property to the prototype, you need to add the method's name to this array.
+    out.dom.Element.propertiesToExclude = [
+        "appendChild"
+    ];
     
     out.dom.Element.prototype = new out.Object();
     out.dom.Element.prototype.constructor = out.dom.Element;
+    
+    out.dom.Element.prototype.appendTo = function (element) {
+        return element.appendChild(this.element);
+    };
+    
+    out.dom.Element.prototype.remove = function () {
+        return this.element.parentNode.removeChild(this.element);
+    };
+    
+    out.dom.Element.prototype.appendChild = function (child) {
+        var node = child instanceof out.dom.Element ? child.element : child;
+        return this.element.appendChild(node);
+    };
 
     out.dom.Element.prototype.fadeIn = function (args) {
         
@@ -173,5 +199,31 @@
         
         this.destroyed = true;
     };
+    
+    ////////////////////////////////////////
+    // dom.Element helper functions
+    ////////////////////////////////////////
+    
+    function wrapElement (element, domElement) {
+        for (var key in domElement) {
+            (function (currentProperty, key) {
+                if (typeof currentProperty === "function") {
+                    element[key] = function () {
+                        return domElement[key].apply(domElement, arguments);
+                    };
+                }
+                else {
+                    element[key] = function (content) {
+                        if (content) {
+                            domElement[key] = content;
+                            return element;
+                        }
+                        
+                        return domElement[key];
+                    };
+                }
+            }(domElement[key], key));
+        }
+    }
 
 }(MO5));
