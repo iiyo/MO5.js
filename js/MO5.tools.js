@@ -40,18 +40,14 @@
      * Returns a unique ID for MO5 objects.
      * @return [Number] The unique ID.
      */
-    out.tools.getUniqueId = function ()
+    out.tools.getUniqueId = (function ()
     {
-        var p1, p2, p3, ret;
+        var n = 0;
         
-        p1 = 255 * Math.random();
-        p2 = 255 * Math.random();
-        p3 = 255 * Math.random();
-        out.highestId += 1;
-        ret = out.highestId + parseInt(p1 * p2 * p3, 10);
-        
-        return ret;
-    };
+        return function () {
+            return n++;
+        };
+    }());
 
     /**
      * Returns the window's width and height.
