@@ -87,37 +87,37 @@ Animations:
 ```javascript
 MO5("MO5.transform", "MO5.TimerWatcher", "MO5.Animation").
 run(function (transform, TimerWatcher, Animation) {
-var anim = new Animation();
-
-anim
-.addStep(function () {
-    return new TimerWatcher()
-    .addTimer(transform(fn, 0, 200))
-    .addTimer(transform(fn2, 100, 400));
-})
-.addStep(function () {
-    // rectangle is some MO5.dom.Element or MO5.canvas.CanvasElement;
-    // move returns a TimerWatcher, not a Timer, because it uses a transformation
-    // for each dimension.
-    return rectangle.move(300, 100);
-})
-.addStep(function () {
-    return new TimerWatcher()
-    .addTimer(transform(fn, 200, 0))
-    .addTimer(transform(fn2, 400, 100));
-})
-.addStep(function () {
-    return rectangle.move(-300, -100);
-});
-
-anim.start(); // Starts the animation; after the last step, starts at the first step again.
-anim.stop(); // Stops the animation after the last step has been executed.
-anim.cancel(); // Cancels the animation immediately, ignoring any remaining steps in the current queue.
-anim.pause(); // Pauses the animation.
-anim.resume(); // Resumes the animation from where it was paused.
-
-// An MO5.Animation can be chained the same way Timer objects can be chained by either using the bus
-// or the promise() method. See the tweening section above for details.
+    var anim = new Animation();
+    
+    anim
+    .addStep(function () {
+        return new TimerWatcher()
+        .addTimer(transform(fn, 0, 200))
+        .addTimer(transform(fn2, 100, 400));
+    })
+    .addStep(function () {
+        // rectangle is some MO5.dom.Element or MO5.canvas.CanvasElement;
+        // move returns a TimerWatcher, not a Timer, because it uses a transformation
+        // for each dimension.
+        return rectangle.move(300, 100);
+    })
+    .addStep(function () {
+        return new TimerWatcher()
+        .addTimer(transform(fn, 200, 0))
+        .addTimer(transform(fn2, 400, 100));
+    })
+    .addStep(function () {
+        return rectangle.move(-300, -100);
+    });
+    
+    anim.start(); // Starts the animation; after the last step, starts at the first step again.
+    anim.stop(); // Stops the animation after the last step has been executed.
+    anim.cancel(); // Cancels the animation immediately, ignoring any remaining steps in the current queue.
+    anim.pause(); // Pauses the animation.
+    anim.resume(); // Resumes the animation from where it was paused.
+    
+    // An MO5.Animation can be chained the same way Timer objects can be chained by either using the bus
+    // or the promise() method. See the tweening section above for details.
 });
 ```
 
