@@ -34,28 +34,25 @@
 
 /* global MO5 */
 
-MO5().define("MO5.fail", function () {
+MO5().define("MO5.Exception", function () {
     
-    /**
-     * A function to log errors with stack traces to the console.
-     * Useful if you encounter some minor errors that are no show-stoppers
-     * and should therefore not be thrown, but which can help
-     * debug your code by looking at the console output.
-     */
-    function fail (e) {
+    function Exception (msg) {
+        var e = Error.apply(null, arguments), key;
         
-        if (console.error) {
-            console.error(e.toString());
-        }
-        else {
-            console.log(e.toString());
+        // we need to copy the properties manually since
+        // Javascript's Error constructor ignores the first
+        // parameter used with .call()...
+        for (key in e) {
+            this[key] = e[key];
         }
         
-        if (e.stack) {
-            console.log(e.stack);
-        }
+        this.message = msg;
+        this.name = "MO5.Exception";
     }
     
-    return fail;
+    Exception.prototype = new Error();
+    Exception.prototype.constructor = Exception;
+
+    return Exception;
     
 });

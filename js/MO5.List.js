@@ -32,22 +32,25 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5 */
 
-    out.List = function () {
-        out.Object.call(this);
+MO5("MO5.CoreObject", "MO5.Queue").
+define("MO5.List", function (CoreObject, Queue) {
+
+    function List () {
+        CoreObject.call(this);
 
         this.unsubscribers = {};
         this.items = [];
-    };
+    }
 
-    out.List.prototype = new out.Object();
+    List.prototype = new CoreObject();
 
-    out.List.prototype.length = function () {
+    List.prototype.length = function () {
         return this.items.length;
     };
 
-    out.List.prototype.append = function (value) {
+    List.prototype.append = function (value) {
 
         var self = this;
 
@@ -67,7 +70,7 @@
             value.unsubscribe(listener, "destroyed");
         }
 
-        if (value instanceof out.Object) {
+        if (value instanceof CoreObject) {
             this.unsubscribers[+value] = unsubscribe;
             value.subscribe(listener, "destroyed");
         }
@@ -77,11 +80,11 @@
         return this;
     };
 
-    out.List.prototype.remove = function (i) {
+    List.prototype.remove = function (i) {
 
         var val = this.items[i];
 
-        if (val instanceof out.Object) {
+        if (val instanceof CoreObject) {
             this.unsubscribers[val.id]();
             delete this.unsubscribers[val.id];
         }
@@ -91,12 +94,12 @@
         return this;
     };
 
-    out.List.prototype.at = function (i) {
+    List.prototype.at = function (i) {
         return this.items[+i];
     };
 
-    out.List.prototype.toQueue = function () {
-        var q = new out.Queue();
+    List.prototype.toQueue = function () {
+        var q = new Queue();
 
         this.items.forEach(function (item) {
             q.add(item);
@@ -105,8 +108,10 @@
         return q;
     };
     
-    out.List.prototype.forEach = function (fn) {
+    List.prototype.forEach = function (fn) {
         this.items.forEach(fn);
     };
+    
+    return List;
 
-})(MO5);
+});

@@ -32,26 +32,28 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5 */
+
+MO5("MO5.Exception", "MO5.CoreObject", "MO5.Map", "MO5.Queue", "MO5.canvas.Object").
+define("MO5.canvas.Layer", function (Exception, CoreObject, Map, Queue, CanvasObject) {
     
     var MSG_EXPECTED_CANVAS_OBJECT = "Parameter 1 is expected to be of type " +
         "MO5.canvas.Object.";
     
-    out.canvas = out.canvas || {};
     
-    out.canvas.Layer = function () {
+    function Layer () {
         
-        out.Object.call(this);
+        CoreObject.call(this);
         
-        this.objects = new out.Map();
-        this.interactiveObjects = new out.Map();
-        this.unsubscribers = new out.Map();
+        this.objects = new Map();
+        this.interactiveObjects = new Map();
+        this.unsubscribers = new Map();
         
-    };
+    }
     
-    out.canvas.Layer.prototype = new out.Object();
+    Layer.prototype = new CoreObject();
     
-    out.canvas.Layer.prototype.draw = function (environment) {
+    Layer.prototype.draw = function (environment) {
         
         this.objects.forEach(function (item) {
             item.draw(environment);
@@ -60,9 +62,9 @@
         return this;
     };
     
-    out.canvas.Layer.prototype.objectAtOffset = function (x, y) {
+    Layer.prototype.objectAtOffset = function (x, y) {
         
-        var keys = new out.Queue(this.interactiveObjects.keys());
+        var keys = new Queue(this.interactiveObjects.keys());
         var obj = null, cur;
         
         while (keys.hasNext()) {
@@ -77,8 +79,8 @@
         return obj;
     };
     
-    out.canvas.Layer.prototype.objectsAtOffset = function (x, y) {
-        var objects = [], cur;
+    Layer.prototype.objectsAtOffset = function (x, y) {
+        var objects = [];
         
         this.interactiveObjects.forEach(function (item) {
             if (item.isAtOffset(x, y)) {
@@ -89,66 +91,69 @@
         return objects;
     };
     
-    out.canvas.Layer.prototype.add = function (item) {
+    Layer.prototype.add = function (item) {
         
         var interactiveObjects = this.interactiveObjects;
         
-        if (!(item instanceof out.canvas.Object)) {
-            throw new out.Error(MSG_EXPECTED_CANVAS_OBJECT);
+        if (!(item instanceof CanvasObject)) {
+            throw new Exception(MSG_EXPECTED_CANVAS_OBJECT);
         }
         
         this.objects.set(+item, item);
         
-        if (item.getProperty("interactive") === true) {
+        if (item.hasFlag("interactive")) {
             interactiveObjects.set(+item, item);
         }
         
-        function listener (data) {
-            
-            if (data.key === "interactive") {
-                
-                if (data.value === true) {
-                    if (!interactiveObjects.has(+item)) {
-                        interactiveObjects.set(+item, item);
-                    }
-                }
-                else {
-                    if (interactiveObjects.has(+item)) {
-                        interactiveObjects.remove(+item);
-                    }
+        function flagSetListener (flag) {
+            if (flag === "interactive") {
+                if (!interactiveObjects.has(+item)) {
+                    interactiveObjects.set(+item, item);
                 }
             }
         }
         
-        this.unsubscribers.set(+item, listener);
-        item.subscribe(listener, "propertyChange");
+        function flagRemoveListener (flag) {
+            if (flag === "interactive") {
+                if (interactiveObjects.has(+item)) {
+                    interactiveObjects.remove(+item);
+                }
+            }
+        }
+        
+        this.unsubscribers.set(+item, {set: flagSetListener, remove: flagRemoveListener});
+        item.subscribe(flagSetListener, "flag_set");
+        item.subscribe(flagRemoveListener, "flag_removed");
         
         return this;
     };
     
-    out.canvas.Layer.prototype.remove = function (item) {
+    Layer.prototype.remove = function (item) {
         
-        if (!(item instanceof out.canvas.Object)) {
-            throw new out.Error(MSG_EXPECTED_CANVAS_OBJECT);
+        if (!(item instanceof CoreObject)) {
+            throw new Exception(MSG_EXPECTED_CANVAS_OBJECT);
         }
         
         this.objects.remove(+item);
         
         if (this.interactiveObjects.has(+item)) {
-            item.unsubscribe(this.unsubscribers.get(+item), "propertyChange");
+            item.unsubscribe(this.unsubscribers.get(+item).set, "flag_set");
+            item.unsubscribe(this.unsubscribers.get(+item).remove, "flag_removed");
             this.interactiveObjects.remove(+item);
         }
         
         return this;
     };
     
-    out.canvas.Layer.prototype.has = function (item) {
+    Layer.prototype.has = function (item) {
         
-        if (!(item instanceof out.canvas.Object)) {
-            throw new out.Error(MSG_EXPECTED_CANVAS_OBJECT);
+        if (!(item instanceof CanvasObject)) {
+            throw new Exception(MSG_EXPECTED_CANVAS_OBJECT);
         }
         
         return this.objects.has(+item);
     };
+ 
+    return Layer;
     
-}(MO5));
+});

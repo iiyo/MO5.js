@@ -32,22 +32,25 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5 */
+
+MO5("MO5.Exception", "MO5.CoreObject", "MO5.Map", "MO5.canvas.Object").
+define("MO5.canvas.Group", function (Exception, CoreObject, Map, CanvasObject) {
     
-    out.canvas.Group = function () {
+    function Group () {
         
-        out.Object.call(this);
+        CoreObject.call(this);
         
-        this.objects = new out.Map();
+        this.objects = new Map();
         
-    };
+    }
     
-    out.canvas.Group.prototype = new out.Object();
+    Group.prototype = new CoreObject();
     
-    out.canvas.Group.prototype.add = function (obj) {
+    Group.prototype.add = function (obj) {
         
-        if (!(obj instanceof out.canvas.Object)) {
-            throw new out.Error("Parameter 1 must be an instance of " +
+        if (!(obj instanceof CanvasObject)) {
+            throw new Exception("Parameter 1 must be an instance of " +
                 "MO5.canvas.Object.");
         }
         
@@ -56,17 +59,17 @@
         return this;
     };
     
-    out.canvas.Group.prototype.remove = function (obj) {
+    Group.prototype.remove = function (obj) {
         this.objects.remove(+obj);
         return this;
     };
     
-    out.canvas.Group.prototype.forEach = function (cb) {
+    Group.prototype.forEach = function (cb) {
         this.objects.forEach(cb);
         return this;
     };
     
-    out.canvas.Group.prototype.callMethod = function (name, args) {
+    Group.prototype.callMethod = function (name, args) {
         
         this.objects.forEach(function (item) {
             
@@ -80,7 +83,7 @@
         return this;
     };
     
-    out.canvas.Group.prototype.applyProperty = function (name, value) {
+    Group.prototype.applyProperty = function (name, value) {
         
         this.objects.forEach(function (item) {
             item[name] = value;
@@ -88,5 +91,7 @@
         
         return this;
     };
+ 
+    return Group;
     
-}(MO5));
+});

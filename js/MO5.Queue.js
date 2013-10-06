@@ -32,19 +32,22 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5 */
+
+MO5("MO5.Exception", "MO5.CoreObject").
+define("MO5.Queue", function (Exception, CoreObject) {
     
     function Queue (arr) {
-        out.Object.call(this);
+        CoreObject.call(this);
         
         if (arr && !(arr instanceof Array)) {
-            throw new out.Error("Parameter 1 is expected to be of type Array.");
+            throw new Exception("Parameter 1 is expected to be of type Array.");
         }
         
         this.arr = arr || [];
-    };
+    }
     
-    Queue.prototype = new out.Object();
+    Queue.prototype = new CoreObject();
     Queue.prototype.constructor = Queue;
     
     Queue.prototype.length = function () {
@@ -57,10 +60,10 @@
     Queue.prototype.add = function (val) {
         var self = this, index = this.arr.length;
         
-        if (val instanceof out.Object) {
+        if (val instanceof CoreObject) {
             
             if (val.destroyed) {
-                throw new out.Error("Trying to add an MO5.Object that has already been destroyed.");
+                throw new Exception("Trying to add an MO5.Object that has already been destroyed.");
             }
             
             val.once(function () { if (!self.destroyed) { self.arr.splice(index, 1); } }, "destroyed");
@@ -79,8 +82,7 @@
      */
     Queue.prototype.replace = function (arr) {
         if (!(arr instanceof Array)) {
-            throw new out.Error("Parameter 1 is expected to be of type Array.");
-            return this;
+            throw new Exception("Parameter 1 is expected to be of type Array.");
         }
         
         this.arr = arr;
@@ -97,7 +99,7 @@
     Queue.prototype.next = function () {
         
         if (!this.hasNext()) {
-            throw new out.Error("Calling next() on empty queue.");
+            throw new Exception("Calling next() on empty queue.");
         }
         
         var ret = this.arr.shift();
@@ -159,6 +161,6 @@
         return new Queue(this.arr.slice());
     };
     
-    out.Queue = Queue;
+    return Queue;
     
-}(MO5));
+});

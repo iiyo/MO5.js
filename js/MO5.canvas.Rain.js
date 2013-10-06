@@ -32,9 +32,10 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
-    
-    out.canvas = out.canvas || {};
+/* global MO5 */
+
+MO5("MO5.canvas.Object").
+define("MO5.canvas.Rain", function (CanvasObject) {
     
     /**
      *    [Constructor] MO5.canvas.Rain
@@ -70,13 +71,11 @@
      *                        
      *                        
      */
-    out.canvas.Rain = function (args)
-    {
-        var self = this;
+    function Rain (args) {
         
         args = args || {};
         
-        out.canvas.Object.call(this, args);
+        CanvasObject.call(this, args);
 
         this.color = args.color || "#fff";
         this.drops = args.drops || 100;
@@ -87,11 +86,11 @@
         this.x = args.x || 0;
         this.y = args.y || 0;
         this.lastDrawTime = 0;
-    };
+    }
     
-    out.canvas.Rain.prototype = new out.canvas.Object();
+    Rain.prototype = new CanvasObject();
 
-    out.canvas.Rain.prototype.draw = function (env)
+    Rain.prototype.draw = function (env)
     {
         var self = this,
             ct = env.context,
@@ -166,4 +165,6 @@
         self.lastDrawTime = Date.now();
     };
     
-}(MO5));
+    return Rain;
+    
+});

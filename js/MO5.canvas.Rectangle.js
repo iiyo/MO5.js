@@ -32,9 +32,10 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
-    
-    out.canvas = out.canvas || {};
+/* global MO5 */
+
+MO5("MO5.canvas.Object").
+define("MO5.canvas.Rectangle", function (CanvasObject) {
     
     /**
      * 
@@ -75,15 +76,14 @@
      *  
      *  
      */
-    out.canvas.Rectangle = function (canvas, args)
-    {
+    function Rectangle (canvas, args) {
+        
         args = args || {};
         
-        out.canvas.Object.call(this, canvas, args);
+        CanvasObject.call(this, canvas, args);
 
-        if (!(this instanceof out.canvas.Rectangle))
-        {
-            return new out.canvas.Rectangle(canvas, args);
+        if (!(this instanceof Rectangle)) {
+            return new Rectangle(canvas, args);
         }
 
         this.color = args.color || "#fff";
@@ -96,11 +96,11 @@
         this.hasShadow = args.hasShadow || false;
         this.width = 100;
         this.height = 60;
-    };
+    }
     
-    out.canvas.Rectangle.prototype = new out.canvas.Object();
+    Rectangle.prototype = new CanvasObject();
 
-    out.canvas.Rectangle.prototype.draw = function (env)
+    Rectangle.prototype.draw = function (env)
     {
         var self = this,
             ct = env.context,
@@ -115,15 +115,13 @@
         ct.save();
         ct.globalAlpha = self.alpha;
         
-        if (rotation > 0)
-        {
-            ct.translate(pivotX, pivotY);
+        if (rotation > 0) {
+            ct.translate(x + pivotX, y + pivotY);
             ct.rotate((Math.PI * rotation) / 180);
-            ct.translate(-pivotX, - pivotY);
+            ct.translate(-(x + pivotX), -(y + pivotY));
         }
         
-        if (self.hasShadow === true)
-        {
+        if (self.hasShadow === true) {
             ct.shadowOffsetX = self.shadowX;
             ct.shadowOffsetY = self.shadowY;
             ct.shadowBlur = self.shadowBlur;
@@ -133,8 +131,7 @@
         ct.fillStyle = self.color;
         ct.fillRect(x, y, width, height);
         
-        if (self.borderWidth > 0)
-        {
+        if (self.borderWidth > 0) {
             ct.strokeStyle = self.borderColor;
             ct.lineWidth = self.borderWidth;
             ct.strokeRect(x, y, width, height);
@@ -142,5 +139,7 @@
         
         ct.restore();
     };
+    
+    return Rectangle;
 
-}(MO5));
+});

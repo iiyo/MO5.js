@@ -32,14 +32,15 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
-    
-    out.canvas = out.canvas || {};
+/* global MO5 */
 
-    out.canvas.Object = function (args) {
+MO5("MO5.CoreObject", "MO5.TimerWatcher", "MO5.transform", "MO5.Point").
+define("MO5.canvas.Object", function (CoreObject, TimerWatcher, transform, Point) {
+    
+    function CanvasObject (args) {
         args = args || {};
         
-        out.Object.call(this);
+        CoreObject.call(this);
         
         this.x = args.x || 0;
         this.y = args.y || 0;
@@ -50,25 +51,25 @@
         this.rotation = args.rotation || 0;
         this.pivotX = args.pivotX || this.x;
         this.pivotY = args.pivotY || this.y;
-    };
+    }
     
-    out.canvas.Object.prototype = new out.Object();
+    CanvasObject.prototype = new CoreObject();
     
-    out.canvas.Object.prototype.move = function (x, y, args) {
+    CanvasObject.prototype.move = function (x, y, args) {
         
         args = args || {};
         
         return this.moveTo(this.x + x, this.y + y, args);
     };
     
-    out.canvas.Object.prototype.moveTo = function (x, y, args) {
+    CanvasObject.prototype.moveTo = function (x, y, args) {
         
         args = args || {};
         
-        var t0, t1, self = this, watcher = args.watcher || new out.TimerWatcher();
+        var self = this, watcher = args.watcher || new TimerWatcher();
         
         return watcher.addTimer(
-            out.transform(
+            transform(
                 function (v)
                 {
                     self.x = v | 0;
@@ -78,7 +79,7 @@
                 args
             )
          ).addTimer(
-            out.transform(
+            transform(
                 function (v)
                 {
                     self.y = v | 0;
@@ -90,15 +91,15 @@
         );
     };
     
-    out.canvas.Object.prototype.fadeIn = function (args) {
+    CanvasObject.prototype.fadeIn = function (args) {
         
         var self = this, watcher;
         
         args = args || {};
-        watcher = args.watcher || new out.TimerWatcher();
+        watcher = args.watcher || new TimerWatcher();
         
         return watcher.addTimer(
-            out.transform(
+            transform(
                 function (v)
                 {
                     self.alpha = v;
@@ -110,15 +111,15 @@
         );
     };
     
-    out.canvas.Object.prototype.fadeOut = function (args) {
+    CanvasObject.prototype.fadeOut = function (args) {
         
-        var self = this;
+        var self = this, watcher;
         
         args = args || {};
-        watcher = args.watcher || new out.TimerWatcher();
+        watcher = args.watcher || new TimerWatcher();
         
         return watcher.addTimer(
-            out.transform(
+            transform(
                 function (v)
                 {
                     self.alpha = v;
@@ -130,39 +131,41 @@
         );
     };
     
-    out.canvas.Object.prototype.getCenter = function () {
+    CanvasObject.prototype.getCenter = function () {
         
         var x = (this.x + (this.width / 2)),
             y = (this.y + (this.height / 2));
         
-        return new out.Point(x, y);
+        return new Point(x, y);
     };
     
-    out.canvas.Object.prototype.isAtOffset = function (x, y) {
+    CanvasObject.prototype.isAtOffset = function (x, y) {
         return x >= this.x && x <= this.x + this.width &&
             y >= this.y && y <= this.y + this.height;
     };
     
-    out.canvas.Object.prototype.change = function (key, value) {
+    CanvasObject.prototype.change = function (key, value) {
         this[key] = value;
         this.updated = true;
         this.trigger("updated");
     };
     
-    out.canvas.Object.prototype.rotate = function (deg, args) {
+    CanvasObject.prototype.rotate = function (deg, args) {
         
         var self = this;
         
         args = args || {};
         
-        return MO5.transform(function (v) {
+        return transform(function (v) {
             self.rotation = v;
         }, this.rotation, this.rotation + deg, args);
     };
     
-    out.canvas.Object.prototype.setPivot = function (xOffset, yOffset) {
+    CanvasObject.prototype.setPivot = function (xOffset, yOffset) {
         this.pivotX = xOffset;
         this.pivotY = yOffset;
     };
     
-}(MO5));
+    return CanvasObject;
+    
+});

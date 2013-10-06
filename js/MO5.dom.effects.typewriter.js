@@ -32,12 +32,11 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5, setTimeout */
+
+MO5().define("MO5.dom.effects.typewriter", function () {
     
-    out.dom = out.dom || {};
-    out.dom.effects = out.dom.effects || {};
-    
-    out.dom.effects.typewriter = function (element, args)
+    function typewriter (element, args)
     {
         var TYPE_ELEMENT = 1, TYPE_TEXT = 3, speed, cb;
         
@@ -68,7 +67,7 @@
             {
                 (function ()
                 {
-                    var children = [], i, len;
+                    var children = [];
                     
                     while (el.hasChildNodes())
                     {
@@ -123,6 +122,8 @@
         }
         
         showChildren(element, cb);
-    };
+    }
     
-}(MO5));
+    return typewriter;
+    
+});

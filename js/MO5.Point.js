@@ -32,15 +32,17 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5 */
+
+MO5().define("MO5.Point", function () {
     
-    out.Point = function (x, y)
+    function Point (x, y)
     {
         this.x = x;
         this.y = y;
-    };
+    }
 
-    out.Point.prototype.getDistance = function (otherPoint)
+    Point.prototype.getDistance = function (otherPoint)
     {
         var dx = this.x - otherPoint.x,
             dy = this.y - otherPoint.y,
@@ -49,4 +51,6 @@
         return dist;
     };
     
-}(MO5));
+    return Point;
+    
+});

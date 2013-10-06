@@ -32,16 +32,19 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5 */
+
+MO5("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Result").
+define("MO5.Timer", function (Exception, CoreObject, fail, Result) {
     
-    out.TimerError = function (msg) {
-        out.Error.call(this);
+    function TimerError (msg) {
+        Exception.call(this);
         
         this.message = msg;
         this.name = "MO5.TimerError";
-    };
+    }
     
-    out.TimerError.prototype = new out.Error();
+    TimerError.prototype = new Exception();
     
     /**
      * A Timer object is returned by the transform() function.
@@ -50,8 +53,8 @@
      * about the state of a transformation, e.g. whether it's
      * still ongoing.
      */
-    out.Timer = function (args) {
-        out.Object.call(this);
+    function Timer () {
+        CoreObject.call(this);
         
         this.running = false;
         this.paused = false;
@@ -60,12 +63,12 @@
         this.timeElapsed = 0;
         this.pauseTimeElapsed = 0;
         this.pauseStartTime = this.startTime;
-    };
+    }
     
-    out.Timer.prototype = new out.Object();
-    out.Timer.prototype.constructor = out.Timer;
+    Timer.prototype = new CoreObject();
+    Timer.prototype.constructor = Timer;
     
-    out.Timer.prototype.start = function () {
+    Timer.prototype.start = function () {
         this.startTime = +(new Date());
         this.running = true;
         
@@ -74,7 +77,7 @@
         return this;
     };
     
-    out.Timer.prototype.stop = function () {
+    Timer.prototype.stop = function () {
         this.running = false;
         this.paused = false;
         
@@ -83,9 +86,9 @@
         return this;
     };
     
-    out.Timer.prototype.cancel = function () {
+    Timer.prototype.cancel = function () {
         if (!this.running) {
-            out.fail(new out.TimerError("Trying to cancel a Timer that isn't running."));
+            fail(new TimerError("Trying to cancel a Timer that isn't running."));
         }
         
         this.elapsed();
@@ -98,27 +101,27 @@
         return this;
     };
     
-    out.Timer.prototype.isRunning = function () {
+    Timer.prototype.isRunning = function () {
         return this.running;
     };
     
-    out.Timer.prototype.isCanceled = function () {
+    Timer.prototype.isCanceled = function () {
         return this.canceled;
     };
     
-    out.Timer.prototype.isPaused = function () {
+    Timer.prototype.isPaused = function () {
         return this.paused;
     };
     
-    out.Timer.prototype.pause = function () {
+    Timer.prototype.pause = function () {
         this.paused = true;
         this.pauseStartTime = +(new Date());
         this.trigger("paused", null, false);
     };
     
-    out.Timer.prototype.resume = function () {
+    Timer.prototype.resume = function () {
         if (!this.paused) {
-            out.fail(new out.TimerError("Trying to resume a timer that isn't paused."));
+            fail(new TimerError("Trying to resume a timer that isn't paused."));
         }
         
         this.paused = false;
@@ -132,7 +135,7 @@
      * start() and stop() is returned. The number of milliseconds does not
      * include the times between pause() and resume()!
      */
-    out.Timer.prototype.elapsed = function () {
+    Timer.prototype.elapsed = function () {
         if (this.running && !this.paused) {
             this.timeElapsed = ((+(new Date()) - this.startTime) - this.pauseTimeElapsed);
         }
@@ -146,7 +149,7 @@
      * the receiver of the capability object can only obtain information
      * about the Timer's state, but not modify it.
      */
-    out.Timer.prototype.getReadOnlyCapability = function () {
+    Timer.prototype.getReadOnlyCapability = function () {
         var self = this;
         
         return {
@@ -157,9 +160,9 @@
         };
     };
     
-    out.Timer.prototype.promise = function () {
+    Timer.prototype.promise = function () {
         
-        var result = new out.Result(), self = this;
+        var result = new Result(), self = this;
         
         this.once(
             function () { if (!result.destroyed && result.isPending()) { result.success(self); } }, 
@@ -178,5 +181,7 @@
         
         return result.promise;
     };
+ 
+    return Timer;
     
-}(MO5));
+});

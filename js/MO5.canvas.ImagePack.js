@@ -32,9 +32,10 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
-    
-    out.canvas = out.canvas || {};
+/* global MO5, Image */
+
+MO5("MO5.canvas.Object", "MO5.easing", "MO5.transform", "MO5.TimerWatcher", "MO5.Animation").
+define("MO5.canvas.ImagePack", function (CanvasObject, easing, transform, TimerWatcher, Animation) {
     
     /**
      * Constructor function for ImagePacks. An ImagePack is an object that
@@ -60,15 +61,15 @@
      *     - [String] shadowColor: CSS color of the shadow.
      *     - [Boolean] hasShadow: Display a shadow? Default: false.
      */
-    out.canvas.ImagePack = function (canvas, args)
+    function ImagePack (canvas, args)
     {
         args = args || {};
         
-        out.canvas.Object.call(this, canvas, args);
+        CanvasObject.call(this, canvas, args);
 
-        if (!(this instanceof out.canvas.ImagePack))
+        if (!(this instanceof ImagePack))
         {
-            return new out.canvas.ImagePack(canvas, args);
+            return new ImagePack(canvas, args);
         }
 
         this.images = {};
@@ -79,17 +80,17 @@
         this.shadowColor = args.shadowColor || "rgba(0, 0, 0, 0.5)";
         this.hasShadow = args.hasShadow || false;
         this.updated = true;
-    };
+    }
 
-    out.canvas.ImagePack.prototype = new out.canvas.Object();
+    ImagePack.prototype = new CanvasObject();
 
     /**
      * Drawing callback function for ImagePack objects.
      * WARNING: Only to be used by library developers.
      * @param Object env An object containing information about the canvas.
      */
-    out.canvas.ImagePack.prototype.draw = function ()
-    {
+    ImagePack.prototype.draw = function () {
+        
         var self = this,
             ct = self.canvas.ct,
             x = self.x,
@@ -98,23 +99,20 @@
             pivotX = self.pivotX,
             pivotY = self.pivotY;
             
-        if (self.current === null)
-        {
+        if (self.current === null) {
             throw new Error("You need to use set() before this method!");
         }
         
         ct.save();
         ct.globalAlpha = self.alpha;
         
-        if (rotation > 0)
-        {
+        if (rotation > 0) {
             ct.translate(pivotX, pivotY);
             ct.rotate((Math.PI * rotation) / 180);
             ct.translate(-pivotX, - pivotY);
         }
         
-        if (self.hasShadow === true)
-        {
+        if (self.hasShadow === true) {
             ct.shadowOffsetX = self.shadowX;
             ct.shadowOffsetY = self.shadowY;
             ct.shadowBlur = self.shadowBlur;
@@ -130,8 +128,7 @@
      * @param String name The name to identify the image.
      * @param String source The source URL of the image.
      */
-    out.canvas.ImagePack.prototype.addImage = function (name, source)
-    {
+    ImagePack.prototype.addImage = function (name, source) {
         var img = new Image();
         
         img.src = source;
@@ -143,8 +140,7 @@
      * @param String name The name of the image specified in the addImage
      *     function.
      */
-    out.canvas.ImagePack.prototype.removeImage = function (name)
-    {
+    ImagePack.prototype.removeImage = function (name) {
         delete this.images[name];
     };
 
@@ -152,10 +148,9 @@
      * Sets the current image of the ImagePack. Only this image will be shown.
      * @param String name The image's name specified on addImage().
      */
-    out.canvas.ImagePack.prototype.set = function (name)
-    {
-        if (typeof this.images[name] === 'undefined')
-        {
+    ImagePack.prototype.set = function (name) {
+        
+        if (typeof this.images[name] === 'undefined') {
             throw new Error("This ImagePack doesn't have such an image.");
         }
         
@@ -184,8 +179,8 @@
      * @return MO5.Animation An animation object to start, stop or loop 
      *     the animation.
      */
-    out.canvas.ImagePack.prototype.animate = function (args)
-    {
+    ImagePack.prototype.animate = function (args) {
+        
         args = args || {};
         
         var names = args.names || null,
@@ -198,16 +193,12 @@
             key,
             imageArr = [];
         
-        if (names === null)
-        {
+        if (names === null) {
             images = this.images;
         }
-        else
-        {
-            for (i = 0, len = names.length; i > len; ++i)
-            {
-                if (typeof this.images[names[i]] === "undefined")
-                {
+        else {
+            for (i = 0, len = names.length; i > len; ++i) {
+                if (typeof this.images[names[i]] === "undefined") {
                     throw new Error("No such image in this ImagePack.");
                 }
                 
@@ -215,18 +206,15 @@
             }
         }
         
-        for (key in images)
-        {
-            if (images.hasOwnProperty(key))
-            {
+        for (key in images) {
+            if (images.hasOwnProperty(key)) {
                 imageArr.push(images[key]);
             }
         }
         
         cbs.push(
-            function ()
-            {
-                var t0 = out.transform(
+            function () {
+                var t0 = transform(
                     function (v)
                     {
                         v = (0.5 + v) | 0;
@@ -244,15 +232,17 @@
                     imageArr.length - 1,
                     {
                         duration: duration,
-                        easing: out.easing.linear
+                        easing: easing.linear
                     }
                 );
                 
-                return new out.TimerWatcher().addTimer(t0);
+                return new TimerWatcher().addTimer(t0);
             }
         );
         
-        return new out.Animation(cbs);
+        return new Animation(cbs);
     };
 
-}(MO5));
+    return ImagePack;
+    
+});

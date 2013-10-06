@@ -32,7 +32,10 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5, window, setTimeout */
+
+MO5("MO5.CoreObject", "MO5.Queue", "MO5.Exception", "MO5.fail").
+define("MO5.Result", function (CoreObject, Queue, Exception, fail) {
     
     var setImmediate = window.setImmediate || function (fn) { setTimeout(fn, 0); };
     
@@ -57,7 +60,7 @@
                 try {
                     nextValue = cb(value);
                     
-                    if (nextValue && nextValue instanceof out.Promise) {
+                    if (nextValue && nextValue instanceof Promise) {
                         nextValue.then(action.success, action.failure);
                     }
                     else {
@@ -76,46 +79,44 @@
         }
     }
     
-    out.Result = function () {
+    function Result () {
         
-        var self = this;
+        CoreObject.call(this);
         
-        out.Object.call(this);
-        
-        this.successQueue = new out.Queue();
-        this.failureQueue = new out.Queue();
+        this.successQueue = new Queue();
+        this.failureQueue = new Queue();
         this.value = undefined;
-        this.status = out.Result.STATUS_PENDING;
+        this.status = Result.STATUS_PENDING;
         
-        this.promise = new out.Promise(this);
+        this.promise = new Promise(this);
+    }
+    
+    Result.STATUS_PENDING = 1;
+    Result.STATUS_FAILURE = 2;
+    Result.STATUS_SUCCESS = 3;
+    
+    Result.getFulfilledPromise = function () {
+        return new Result().success().promise;
     };
     
-    out.Result.STATUS_PENDING = 1;
-    out.Result.STATUS_FAILURE = 2;
-    out.Result.STATUS_SUCCESS = 3;
-    
-    out.Result.getFulfilledPromise = function () {
-        return new out.Result().success().promise;
+    Result.getBrokenPromise = function () {
+        return new Result().failure().promise;
     };
     
-    out.Result.getBrokenPromise = function () {
-        return new out.Result().failure().promise;
+    Result.prototype = new CoreObject();
+    
+    Result.prototype.isPending = function () {
+        return this.status === Result.STATUS_PENDING;
     };
     
-    out.Result.prototype = new out.Object();
-    
-    out.Result.prototype.isPending = function () {
-        return this.status === out.Result.STATUS_PENDING;
-    };
-    
-    out.Result.prototype.failure = function (reason) {
-        if (this.status !== out.Result.STATUS_PENDING) {
-            out.fail(new out.Error("The result of the action has already been determined."));
+    Result.prototype.failure = function (reason) {
+        if (this.status !== Result.STATUS_PENDING) {
+            fail(new Exception("The result of the action has already been determined."));
             return;
         }
         
         this.value = reason;
-        this.status = out.Result.STATUS_FAILURE;
+        this.status = Result.STATUS_FAILURE;
         resolve(this.failureQueue, reason);
         this.successQueue.clear();
         this.failureQueue.clear();
@@ -123,14 +124,14 @@
         return this;
     };
     
-    out.Result.prototype.success = function (value) {
-        if (this.status !== out.Result.STATUS_PENDING) {
-            out.fail(new out.Error("The result of the action has already been determined."));
+    Result.prototype.success = function (value) {
+        if (this.status !== Result.STATUS_PENDING) {
+            fail(new Exception("The result of the action has already been determined."));
             return;
         }
         
         this.value = value;
-        this.status = out.Result.STATUS_SUCCESS;
+        this.status = Result.STATUS_SUCCESS;
         resolve(this.successQueue, value);
         this.successQueue.clear();
         this.failureQueue.clear();
@@ -138,7 +139,38 @@
         return this;
     };
     
-    out.Result.addToQueue = addToQueue;
-    out.Result.resolve = resolve;
+    Result.addToQueue = addToQueue;
+    Result.resolve = resolve;
     
-}(MO5));
+    function Promise (result) {
+        
+        CoreObject.call(this);
+        
+        this.then = function (success, failure) {
+            
+            var newResult = new Result();
+            
+            switch (result.status) {
+                case Result.STATUS_PENDING:
+                    Result.addToQueue("success", result.successQueue, success, newResult);
+                    Result.addToQueue("failure", result.failureQueue, failure, newResult);
+                    break;
+                case out.Result.STATUS_SUCCESS:
+                    out.Result.addToQueue("success", result.successQueue, success, newResult);
+                    out.Result.resolve(result.successQueue, result.value);
+                    break;
+                case out.Result.STATUS_FAILURE:
+                    out.Result.addToQueue("failure", result.failureQueue, failure, newResult);
+                    out.Result.resolve(result.failureQueue, result.value);
+                    break;
+            }
+            
+            return newResult.promise;
+        };
+    }
+    
+    Promise.prototype = new CoreObject();
+    
+    return Result;
+    
+});

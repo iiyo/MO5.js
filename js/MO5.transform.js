@@ -32,7 +32,10 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5, requestAnimationFrame */
+
+MO5("MO5.Exception", "MO5.Timer", "MO5.easing").
+define("MO5.transform", function (Exception, Timer, easing) {
     
     /**
      * 
@@ -98,32 +101,31 @@
      *            
      * 
      */
-    out.transform = function (callback, from, to, args)
+    function transform (callback, from, to, args)
     {
         args = args || {};
 
         if (typeof callback === "undefined" || !callback)
         {
-            throw new out.Error("MO5.transform expects parameter callback to be a function.");
+            throw new Exception("MO5.transform expects parameter callback to be a function.");
         }
 
         var dur = args.duration || 1000,
             f,
             func,
             cv = from,
-            timer = args.timer || new out.Timer(),
+            timer = args.timer || new Timer(),
             diff = to - from,
             doLog = args.log || false,
             c = 0, // number of times func get's executed
-            onFinish = args.onFinish || function () {},
             lastExecution = 0,
-            fps = args.fps || out.defaults.fps;
+            fps = args.fps || MO5.defaults.fps;
 
-        f = args.easing || out.easing.sineEaseOut;
+        f = args.easing || easing.sineEaseOut;
 
-        func = function ()
-        {
-            var t, dt, tElapsed;
+        func = function () {
+            
+            var dt, tElapsed;
             
             if ((Date.now() - lastExecution) > (1000 / fps)) {
                 
@@ -157,8 +159,7 @@
                 
                 dt = timer.elapsed() - tElapsed;
                 
-                if (doLog === true)
-                {
+                if (doLog === true) {
                     console.log("Current value: " + cv + "; c: " + c + "; Exec time: " + dt);
                 }
                 
@@ -172,6 +173,8 @@
         requestAnimationFrame(func);
         
         return timer;
-    };
+    }
     
-}(MO5));
+    return transform;
+    
+});

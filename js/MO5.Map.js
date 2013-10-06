@@ -32,7 +32,10 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5 */
+
+MO5("MO5.CoreObject", "MO5.Exception").
+define("MO5.Map", function (CoreObject, Exception) {
     
     var prefix = "MO5Map";
     
@@ -44,24 +47,24 @@
         return k.replace(new RegExp(prefix), "");
     }
     
-    out.Map = function () {
+    function Map () {
         
-        out.Object.call(this);
+        CoreObject.call(this);
         
         this.items = {};
         this.unsubscribers = {};
         this.count = 0;
-    };
+    }
     
-    out.Map.prototype = new out.Object();
+    Map.prototype = new CoreObject();
     
-    out.Map.prototype.length = function () {
+    Map.prototype.length = function () {
         return this.count;
     };
     
-    out.Map.prototype.set = function (k, value) {
+    Map.prototype.set = function (k, value) {
         
-        var self = this, whenDestroyed, key = makeKey(k), whenKeyDestroyed;
+        var self = this, key = makeKey(k);
         
         function whenDestroyed () {
             delete self.items[key];
@@ -69,27 +72,27 @@
         }
             
         if (!k) {
-            throw new out.Error("MO5.Map keys cannot be falsy.");
+            throw new Exception("MO5.Map keys cannot be falsy.");
         }
         
         if (this.has(key)) {
             this.remove(key);
         }
         
-        if (value && value instanceof out.Object) {
+        if (value && value instanceof CoreObject) {
             
             if (value.destroyed) {
-                throw new out.Error("Trying to add an MO5.Object that has " +
+                throw new Exception("Trying to add an MO5.Object that has " +
                     "already been destroyed.");
             }
             
             value.subscribe(whenDestroyed, "destroyed");
         }
         
-        if (k instanceof out.Object) {
+        if (k instanceof CoreObject) {
             
             if (k.destroyed) {
-                throw new out.Error("Trying to use an MO5.Object as key that " +
+                throw new Exception("Trying to use an MO5.Object as key that " +
                     "has already been destroyed.");
             }
             
@@ -97,15 +100,15 @@
             
         }
         
-        if (value && value instanceof out.Object || k instanceof out.Object) {
+        if (value && value instanceof CoreObject || k instanceof CoreObject) {
             
             this.unsubscribers[key] = function () {
                 
-                if (value instanceof out.Object) {
+                if (value instanceof CoreObject) {
                     value.unsubscribe(whenDestroyed, "destroyed");
                 }
                 
-                if (k instanceof out.Object) {
+                if (k instanceof CoreObject) {
                     k.unsubscribe(whenDestroyed, "destroyed");
                 }
             };
@@ -120,7 +123,7 @@
         return this;
     };
     
-    out.Map.prototype.get = function (k) {
+    Map.prototype.get = function (k) {
         
         var key = makeKey(k);
         
@@ -131,12 +134,12 @@
         return this.items[key];
     };
     
-    out.Map.prototype.remove = function (k) {
+    Map.prototype.remove = function (k) {
         
         var key = makeKey(k);
         
         if (!this.has(key)) {
-            throw new out.Error("Trying to remove an unknown key from an MO5.Map.");
+            throw new Exception("Trying to remove an unknown key from an MO5.Map.");
         }
         
         if (this.unsubscribers.hasOwnProperty(key)) {
@@ -153,27 +156,27 @@
         return this;
     };
     
-    out.Map.prototype.has = function (k) {
+    Map.prototype.has = function (k) {
         
         var key = makeKey(k);
         
         return this.items.hasOwnProperty(key);
     };
     
-    out.Map.prototype.destroy = function () {
+    Map.prototype.destroy = function () {
         
         for (var key in this.unsubscribers) {
             this.unsubscribers[key]();
             delete this.unsubscribers[key];
         }
         
-        out.Object.prototype.destroy.call(this);
+        CoreObject.prototype.destroy.call(this);
     };
     
-    out.Map.prototype.forEach = function (fn) {
+    Map.prototype.forEach = function (fn) {
         
         if (!fn || typeof fn !== "function") {
-            throw new out.Error("Parameter 1 is expected to be of type function.");
+            throw new Exception("Parameter 1 is expected to be of type function.");
         }
         
         for (var key in this.items) {
@@ -183,7 +186,7 @@
         return this;
     };
     
-    out.Map.prototype.keys = function () {
+    Map.prototype.keys = function () {
         
         var keys = [];
         
@@ -194,8 +197,8 @@
         return keys;
     };
     
-    out.Map.prototype.clone = function () {
-        var clone = new out.Map();
+    Map.prototype.clone = function () {
+        var clone = new Map();
         
         this.forEach(function (item, key) {
             clone.set(revokeKey(key), item);
@@ -203,5 +206,7 @@
         
         return clone;
     };
+ 
+    return Map;
     
-}(MO5));
+});

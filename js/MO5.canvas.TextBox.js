@@ -32,9 +32,10 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
-    
-    out.canvas = out.canvas || {};
+/* global MO5 */
+
+MO5("MO5.canvas.Object").
+define("MO5.canvas.TextBox", function (CanvasObject) {
     
     /**
      * 
@@ -90,15 +91,14 @@
      * 
      * 
      */
-    out.canvas.TextBox = function (canvas, args)
-    {
+    function TextBox (canvas, args) {
+        
         args = args || {};
         
-        out.canvas.Object.call(this, canvas, args);
+        CanvasObject.call(this, canvas, args);
 
-        if (!(this instanceof out.canvas.TextBox))
-        {
-            return new out.canvas.TextBox(canvas, args);
+        if (!(this instanceof TextBox)) {
+            return new TextBox(canvas, args);
         }
         
         this.lastText = "";
@@ -114,12 +114,11 @@
         this.shadowColor = args.shadowColor || "rgba(0, 0, 0, 0.5)";
         this.hasShadow = args.hasShadow || false;
         this.updated = true;
-    };
+    }
 
-    out.canvas.TextBox.prototype = new out.canvas.Object();
+    TextBox.prototype = new CanvasObject();
 
-    out.canvas.TextBox.prototype.draw = function ()
-    {
+    TextBox.prototype.draw = function () {
         var self = this,
             ct = self.canvas.ct,
             words = self.text.split(" "),
@@ -132,15 +131,13 @@
         ct.save();
         ct.globalAlpha = self.alpha;
         
-        if (self.rotation > 0)
-        {
+        if (self.rotation > 0) {
             ct.translate(self.pivotX, self.pivotY);
             ct.rotate((Math.PI * self.rotation) / 180);
             ct.translate(-self.pivotX, - self.pivotY);
         }
         
-        if (self.hasShadow === true)
-        {
+        if (self.hasShadow === true) {
             ct.shadowOffsetX = self.shadowX;
             ct.shadowOffsetY = self.shadowY;
             ct.shadowBlur = self.shadowBlur;
@@ -151,24 +148,22 @@
         ct.font = self.font;
         ct.textAlign = self.align;
         
-        if (this.text !== self.lastText)
-        {
+        if (this.text !== self.lastText) {
+            
             self.lines = [];
             
-            for (i = 0; i < len; ++i)
-            {
+            for (i = 0; i < len; ++i) {
+                
                 word = words[i];
                 
-                if (ct.measureText(line + " " + word).width > self.width)
-                {
+                if (ct.measureText(line + " " + word).width > self.width) {
                     self.lines.push(line);
                     line = "";
                 }
                 
                 line = line + " " + word;
                 
-                if (i === len - 1)
-                {
+                if (i === len - 1) {
                     self.lines.push(line);
                 }
             }
@@ -176,8 +171,7 @@
         
         lineLen = self.lines.length;
         
-        for (i = 0; i < lineLen; ++i)
-        {
+        for (i = 0; i < lineLen; ++i) {
             ct.fillText(
             self.lines[i], ((0.5 + self.x) | 0), ((0.5 + (self.y + self.lineHeight * i)) | 0));
         }
@@ -185,5 +179,7 @@
         self.lastText = self.text;
         self.canvas.ct.restore();
     };
+    
+    return TextBox;
 
-}(MO5));
+});

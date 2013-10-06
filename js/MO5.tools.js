@@ -32,15 +32,17 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5, window, document */
 
-    out.tools = out.tools || {};
+MO5().define("MO5.tools", function () {
+    
+    var tools = {};
     
     /**
      * Returns a unique ID for MO5 objects.
      * @return [Number] The unique ID.
      */
-    out.tools.getUniqueId = (function ()
+    tools.getUniqueId = (function ()
     {
         var n = 0;
         
@@ -53,7 +55,7 @@
      * Returns the window's width and height.
      * @return Object An object with a width and a height property.
      */
-    out.tools.getWindowDimensions = function ()
+    tools.getWindowDimensions = function ()
     {
         var e = window,
             a = 'inner';
@@ -76,11 +78,11 @@
      * @param w The normal width of the element.
      * @param h The normal height of the element.
      */
-    out.tools.fitToWindow = function (el, w, h)
+    tools.fitToWindow = function (el, w, h)
     {
         var dim, ratio, sw, sh, ratioW, ratioH;
         
-        dim = out.tools.getWindowDimensions();
+        dim = tools.getWindowDimensions();
         sw = dim.width; // - (dim.width * 0.01);
         sh = dim.height; // - (dim.height * 0.01);
 
@@ -93,7 +95,7 @@
         el.getAttribute('style') + ' -moz-transform: scale(' + ratio + ',' + ratio + ') rotate(0.01deg);' + ' -ms-transform: scale(' + ratio + ',' + ratio + ');' + ' -o-transform: scale(' + ratio + ',' + ratio + ');' + ' -webkit-transform: scale(' + ratio + ',' + ratio + ');' + ' transform: scale(' + ratio + ',' + ratio + ');');
     };
     
-    out.tools.timeoutInspector = (function () {
+    tools.timeoutInspector = (function () {
         
         var oldSetTimeout, oldSetInterval, oldClearTimeout, oldClearInterval, oldRequestAnimationFrame;
         var activeIntervals = {}, timeoutCalls = 0, intervalCalls = 0, animationFrameRequests = 0;
@@ -197,4 +199,6 @@
         };
     }());
     
-}(MO5));
+    return tools;
+    
+});

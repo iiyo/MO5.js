@@ -32,28 +32,32 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5, setTimeout */
+
+MO5("MO5.Exception", "MO5.CoreObject", "MO5.Queue", "MO5.Timer", "MO5.TimerWatcher").
+define("MO5.Animation", function (Exception, CoreObject, Queue, Timer, TimerWatcher) {
     
-    out.AnimationError = function (msg) {
+    function AnimationError (msg) {
         Error.call(this);
-        out.Error.call(this);
+        Exception.call(this);
         
         this.message = msg;
         this.name = "MO5.AnimationError";
-    };
+    }
     
-    out.AnimationError.prototype = new out.Error();
+    AnimationError.prototype = new Exception();
     
     
     /**
      * Uses callbacks to animate.
      * @param callbacks Optional list of callbacks. Can be of type Array or MO5.Queue.
      */
-    out.Animation = function (callbacks) {
-        out.Object.call(this);
+    function Animation (callbacks) {
         
-        this.callbacks = new out.Queue();
-        this.queue = new out.Queue();
+        CoreObject.call(this);
+        
+        this.callbacks = new Queue();
+        this.queue = new Queue();
         this.running = false;
         this.canceled = false;
         this.paused = false;
@@ -61,23 +65,24 @@
         this.count = 0;
         this.currentWatcher = null;
         
-        if (callbacks && callbacks instanceof out.Queue) {
+        if (callbacks && callbacks instanceof Queue) {
             this.callbacks = callbacks;
         }
         else if (callbacks && callbacks instanceof Array) {
             this.callbacks.replace(callbacks.slice());
         }
         else if (callbacks) {
-            throw new out.AnimationError("Parameter 1 is expected to be of type Array or MO5.Queue.");
+            throw new AnimationError("Parameter 1 is expected to be of type Array or MO5.Queue.");
         }
-    };
+    }
     
-    out.Animation.prototype = new out.Object();
-    out.Animation.prototype.constructor = out.Animation;
+    Animation.prototype = new CoreObject();
+    Animation.prototype.constructor = Animation;
     
-    out.Animation.prototype.addStep = function (cb) {
+    Animation.prototype.addStep = function (cb) {
+        
         if (this.running) {
-            throw new out.AnimationError("Cannot add steps to a running animation.");
+            throw new AnimationError("Cannot add steps to a running animation.");
         }
         
         this.callbacks.add(cb);
@@ -86,23 +91,23 @@
         return this;
     };
     
-    out.Animation.prototype.isRunning = function () {
+    Animation.prototype.isRunning = function () {
         return this.running;
     };
     
-    out.Animation.prototype.isCanceled = function () {
+    Animation.prototype.isCanceled = function () {
         return this.canceled;
     };
     
-    out.Animation.prototype.isPaused = function () {
+    Animation.prototype.isPaused = function () {
         return this.paused;
     };
     
-    out.Animation.prototype.start = function () {
+    Animation.prototype.start = function () {
         var fn, self = this, cbs;
         
         if (this.running) {
-            throw new out.AnimationError("Animation is already running.");
+            throw new AnimationError("Animation is already running.");
         }
         
         cbs = this.callbacks.clone();
@@ -145,7 +150,7 @@
             next = cbs.next();
             watcher = next();
             
-            if (watcher && watcher instanceof out.TimerWatcher) {
+            if (watcher && watcher instanceof TimerWatcher) {
                 self.currentWatcher = watcher;
                 watcher.once(fn, "stopped");
             }
@@ -159,15 +164,16 @@
         return this;
     };
     
-    out.Animation.prototype.pause = function () {
+    Animation.prototype.pause = function () {
+        
         if (this.paused) {
-            throw new out.AnimationError("Trying to pause an already paused animation.");
+            throw new AnimationError("Trying to pause an already paused animation.");
         }
         
         this.paused = true;
         
         if (this.currentWatcher) {
-            this.currentWatcher.pauseAll();
+            this.currentWatcher.pause();
         }
         
         this.trigger("paused", null, false);
@@ -175,15 +181,15 @@
         return this;
     };
     
-    out.Animation.prototype.resume = function () {
+    Animation.prototype.resume = function () {
         if (!this.paused) {
-            throw new out.AnimationError("Trying to resume an animation that isn't paused.");
+            throw new AnimationError("Trying to resume an animation that isn't paused.");
         }
         
         this.paused = false;
         
         if (this.currentWatcher) {
-            this.currentWatcher.resumeAll();
+            this.currentWatcher.resume();
         }
         
         this.trigger("resumed", null, false);
@@ -191,9 +197,10 @@
         return this;
     };
     
-    out.Animation.prototype.cancel = function () {
+    Animation.prototype.cancel = function () {
+        
         if (this.canceled) {
-            throw new out.AnimationError("Trying to cancel an already canceled animation.");
+            throw new AnimationError("Trying to cancel an already canceled animation.");
         }
         
         this.canceled = true;
@@ -202,7 +209,7 @@
         this.limit = 0;
         
         if (this.currentWatcher) {
-            this.currentWatcher.cancelAll();
+            this.currentWatcher.cancel();
         }
         
         this.trigger("canceled", null, false);
@@ -210,10 +217,10 @@
         return this;
     };
     
-    out.Animation.prototype.stop = function () {
+    Animation.prototype.stop = function () {
         
         if (!this.running) {
-            throw new out.AnimationError("Trying to stop an animation that isn't running. " + 
+            throw new AnimationError("Trying to stop an animation that isn't running. " + 
                 "Check isRunning() beforehand.");
         }
         
@@ -224,9 +231,10 @@
         return this;
     };
     
-    out.Animation.prototype.loop = function (c) {
+    Animation.prototype.loop = function (c) {
+        
         if (c < 1) {
-            throw new out.AnimationError("Parameter 1 is expected to be greater than zero.");
+            throw new AnimationError("Parameter 1 is expected to be greater than zero.");
         }
         
         this.count = 0;
@@ -235,8 +243,10 @@
         return this.start();
     };
     
-    out.Animation.prototype.promise = function () {
-        return out.Timer.prototype.promise.call(this);
+    Animation.prototype.promise = function () {
+        return Timer.prototype.promise.call(this);
     };
     
-}(MO5));
+    return Animation;
+    
+});

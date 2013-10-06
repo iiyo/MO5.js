@@ -32,17 +32,18 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5, document */
+
+MO5("MO5.CoreObject", "MO5.transform", "MO5.TimerWatcher", "MO5.dom.effects.typewriter").
+define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewriter) {
     
-    out.dom = out.dom || {};
-    
-    out.dom.Element = function (args) {
+    function Element (args) {
         
-        var element, self = this;
+        var self = this;
         
         args = args || {};
         
-        out.Object.call(this);
+        CoreObject.call(this);
 
         this.parent = args.parent || document.body;
         this.nodeType = args.nodeType || "div";
@@ -50,41 +51,41 @@
         
         wrapElement(this, this.element);
         
-        out.dom.Element.propertiesToExclude.forEach(function (property) {
+        Element.propertiesToExclude.forEach(function (property) {
             delete self[property];
         });
-    };
+    }
     
     // Properties that should not shadow the DOM element's properties.
     // If you want to add a method with the same name as a DOM element's
     // property to the prototype, you need to add the method's name to this array.
-    out.dom.Element.propertiesToExclude = [
+    Element.propertiesToExclude = [
         "appendChild"
     ];
     
-    out.dom.Element.prototype = new out.Object();
-    out.dom.Element.prototype.constructor = out.dom.Element;
+    Element.prototype = new CoreObject();
+    Element.prototype.constructor = Element;
     
-    out.dom.Element.prototype.appendTo = function (element) {
+    Element.prototype.appendTo = function (element) {
         return element.appendChild(this.element);
     };
     
-    out.dom.Element.prototype.remove = function () {
+    Element.prototype.remove = function () {
         return this.element.parentNode.removeChild(this.element);
     };
     
-    out.dom.Element.prototype.appendChild = function (child) {
-        var node = child instanceof out.dom.Element ? child.element : child;
+    Element.prototype.appendChild = function (child) {
+        var node = child instanceof Element ? child.element : child;
         return this.element.appendChild(node);
     };
 
-    out.dom.Element.prototype.fadeIn = function (args) {
+    Element.prototype.fadeIn = function (args) {
         
         args = args || {};
         
         var element = this.element;
         
-        return out.transform(
+        return transform(
             function (v) {
                 element.style.opacity = v;
             },
@@ -94,13 +95,13 @@
         );
     };
 
-    out.dom.Element.prototype.fadeOut = function (args) {
+    Element.prototype.fadeOut = function (args) {
         
         args = args || {};
         
         var element = this.element;
         
-        return out.transform(
+        return transform(
             function (v) {
                 element.style.opacity = v;
             },
@@ -110,7 +111,7 @@
         );
     };
 
-    out.dom.Element.prototype.moveTo = function (x, y, args) {
+    Element.prototype.moveTo = function (x, y, args) {
         
         args = args || {};
         
@@ -119,7 +120,7 @@
             oy = element.offsetTop,
             t0, t1;
             
-        t0 = out.transform(
+        t0 = transform(
             function (v) {
                 element.style.left = v + "px";
             },
@@ -128,7 +129,7 @@
             args
         );
         
-        t1 = out.transform(
+        t1 = transform(
             function (v) {
                 element.style.top = v + "px";
             },
@@ -137,10 +138,10 @@
             args
         );
         
-        return new out.TimerWatcher().addTimer(t0).addTimer(t1);
+        return new TimerWatcher().addTimer(t0).addTimer(t1);
     };
 
-    out.dom.Element.prototype.move = function (x, y, args) {
+    Element.prototype.move = function (x, y, args) {
         
         args = args || {};
         
@@ -151,7 +152,7 @@
         return this.moveTo(dx, dy, args);
     };
 
-    out.dom.Element.prototype.display = function () {
+    Element.prototype.display = function () {
         
         var parent;
         
@@ -162,7 +163,7 @@
         catch (e) {}
     };
 
-    out.dom.Element.prototype.hide = function () {
+    Element.prototype.hide = function () {
         
         var parent;
         
@@ -173,12 +174,12 @@
         catch (e) {}
     };
     
-    out.dom.Element.prototype.typewriter = function (args) {
+    Element.prototype.typewriter = function (args) {
         args = args || {};
-        out.dom.effects.typewriter(this.element, args);
+        typewriter(this.element, args);
     };
     
-    out.dom.Element.prototype.destroy = function () {
+    Element.prototype.destroy = function () {
         try {
             this.element.parentNode.removeChild(this.element);
         }
@@ -225,5 +226,7 @@
             }(domElement[key], key));
         }
     }
+    
+    return Element;
 
-}(MO5));
+});

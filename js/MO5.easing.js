@@ -32,15 +32,16 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-(function (out) {
+/* global MO5, window */
+
+MO5().define("MO5.easing", function () {
     
     /**
      * Acceleration functions for use in MO5.transform().
      */
-    out.easing = (function (stdLib) {
-        "use asm";
+    var easing = (function (stdLib) {
         
-        var Math = stdLib.Math;
+        "use asm";
 
         /*!
          * TERMS OF USE - EASING EQUATIONS
@@ -64,7 +65,7 @@
             t = t|0;
             
             return +(t / d);
-        };
+        }
 
         /**
          * Function for sine transformations.
@@ -73,21 +74,21 @@
             d = d|0;
             t = t|0;
             
-            var s = +(Math.PI / (2 * d));
-            var y = +(Math.abs(Math.sin(t * s)));
+            var s = +(stdLib.Math.PI / (2 * d));
+            var y = +(stdLib.Math.abs(stdLib.Math.sin(t * s)));
             
             return +y;
-        };
+        }
         
         function sineEaseIn (d, t) {
             d = d|0;
             t = t|0;
             
-            var s = +(Math.PI / (2 * d));
-            var y = +(Math.abs(-Math.cos(t * s) + 1));
+            var s = +(stdLib.Math.PI / (2 * d));
+            var y = +(stdLib.Math.abs(-stdLib.Math.cos(t * s) + 1));
             
             return +y;
-        };
+        }
         
         function sineEaseInOut (d, t) {
             d = d|0;
@@ -99,7 +100,7 @@
             else {
                 return +sineEaseOut(d, t);
             }
-        };
+        }
         
         
         /*
@@ -159,55 +160,37 @@
             }
             
             return +val;
-        };
+        }
         
-        function createEaseOutFunction (potency) {
+        function easeOut (potency, d, t) {
+            d = d|0;
+            t = t|0;
             
-            var fn = function (d, t) {
-                d = d|0;
-                t = t|0;
-                
-                return +(1 - Math.pow(1 - (t / d), potency));
-            };
-            
-            return fn;
-        };
+            return +(1 - stdLib.Math.pow(1 - (t / d), potency));
+        }
         
-        function createEaseInFunction (potency) {
+        function easeIn (potency, d, t) {
+            d = d|0;
+            t = t|0;
             
-            return function (d, t) {
-                d = d|0;
-                t = t|0;
-            
-                return +(Math.pow((t / d), potency));
-            };
-        };
+            return +(stdLib.Math.pow((t / d), potency));
+        }
         
-        function createEaseInOutFunction (potency) {
+        function easeInOut (potency, d, t) {
+            d = d|0;
+            t = t|0;
             
-            var fn, eIn, eOut;
+            var val = 0.0;
             
-            eIn = createEaseInFunction(potency);
-            eOut = createEaseOutFunction(potency);
+            if (t > d / 2) {
+                val = +easeOut(potency, d, t);
+            }
+            else {
+                val = +easeIn(potency, d, t);
+            }
             
-            fn = function (d, t) {
-                d = d|0;
-                t = t|0;
-            
-                var val = 0.0;
-                
-                if (t > d / 2) {
-                    val = +eOut(d, t);
-                }
-                else {
-                    val = +eIn(d, t);
-                }
-                
-                return +val;
-            };
-            
-            return fn;
-        };
+            return +val;
+        }
         
         return {
             linear: linear,
@@ -215,27 +198,53 @@
             sineEaseIn: sineEaseIn,
             sineEaseInOut: sineEaseInOut,
             easeOutBounce: easeOutBounce,
-            
-            createEaseInFunction: createEaseInFunction,
-            createEaseOutFunction: createEaseOutFunction,
-            createEaseInOutFunction: createEaseInOutFunction,
-            
-            easeOutQuad: createEaseOutFunction(2),
-            easeOutCubic: createEaseOutFunction(3),
-            easeOutQuart: createEaseOutFunction(4),
-            easeOutQuint: createEaseOutFunction(5),
-        
-            easeInQuad: createEaseInFunction(2),
-            easeInCubic: createEaseInFunction(3),
-            easeInQuart: createEaseInFunction(4),
-            easeInQuint: createEaseInFunction(5),
-            
-            easeInOutQuad: createEaseInOutFunction(2),
-            easeInOutCubic: createEaseInOutFunction(3),
-            easeInOutQuart: createEaseInOutFunction(4),
-            easeInOutQuint: createEaseInOutFunction(5)
+            easeIn: easeIn,
+            easeOut: easeOut,
+            easeInOut: easeInOut
         };
         
     }(window));
+    
+    easing.easingFunctionGenerator = easingFunctionGenerator;
+    easing.createEaseInFunction = createEaseInFunction;
+    easing.createEaseOutFunction = createEaseOutFunction;
+    easing.createEaseInOutFunction = createEaseInOutFunction;
+    
+    easing.easeInQuad = createEaseInFunction(2);
+    easing.easeInCubic = createEaseInFunction(3);
+    easing.easeInQuart = createEaseInFunction(4);
+    easing.easeInQuint = createEaseInFunction(5);
+    
+    easing.easeOutQuad = createEaseOutFunction(2);
+    easing.easeOutCubic = createEaseOutFunction(3);
+    easing.easeOutQuart = createEaseOutFunction(4);
+    easing.easeOutQuint = createEaseOutFunction(5);
+    
+    easing.easeInOutQuad = createEaseInOutFunction(2);
+    easing.easeInOutCubic = createEaseInOutFunction(3);
+    easing.easeInOutQuart = createEaseInOutFunction(4);
+    easing.easeInOutQuint = createEaseInOutFunction(5);
 
-}(MO5));
+    return easing;
+    
+    function easingFunctionGenerator (type) {
+        return function (potency) {
+            return function (d, t) {
+                return easing[type](potency, d, t);
+            };
+        };
+    }
+    
+    function createEaseInFunction (potency) {
+        return easingFunctionGenerator("easeIn")(potency);
+    }
+    
+    function createEaseOutFunction (potency) {
+        return easingFunctionGenerator("easeOut")(potency);
+    }
+    
+    function createEaseInOutFunction (potency) {
+        return easingFunctionGenerator("easeInOut")(potency);
+    }
+    
+});
