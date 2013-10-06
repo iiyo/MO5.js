@@ -42,7 +42,7 @@ define("MO5.CoreObject", function (Exception, fail, EventBus) {
     /**
      * The MO5 base type for almost all other types used in MO5.
      * 
-     * All MO5.Object instances are observable by subscribing
+     * All CoreObject instances are observable by subscribing
      * to the events that they emit. 
      * 
      * @event destroyed()
@@ -112,7 +112,7 @@ define("MO5.CoreObject", function (Exception, fail, EventBus) {
         
         if (!obj2 || !(obj2 instanceof CoreObject)) {
             fail(new Exception("Cannot connect events: Parameter 3 is " +
-                "expected to be of type MO5.Object."));
+                "expected to be of type CoreObject."));
             return this;
         }
         
@@ -147,7 +147,7 @@ define("MO5.CoreObject", function (Exception, fail, EventBus) {
     };
     
     /**
-     * MO5.Object instances have a unique ID; when used as a string,
+     * CoreObject instances have a unique ID; when used as a string,
      * the ID of the object is used as a representation.
      */
     CoreObject.prototype.toString = function () {
@@ -160,11 +160,11 @@ define("MO5.CoreObject", function (Exception, fail, EventBus) {
     
     /**
      * Emits the destroyed() event and deletes all of the instances properties.
-     * After this method has been called on an MO5.Object, it can not be used
+     * After this method has been called on an CoreObject, it can not be used
      * anymore and should be considered dead.
      * 
-     * All users of an MO5.Object should hook to the destroyed() event and delete
-     * their references to the MO5.Object when its destroyed() event is emitted.
+     * All users of a CoreObject should hook to the destroyed() event and delete
+     * their references to the CoreObject when its destroyed() event is emitted.
      */
     CoreObject.prototype.destroy = function () {
         
