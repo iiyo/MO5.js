@@ -34,7 +34,7 @@ MO5("MO5.CoreObject").run(function (CoreObject) {
         CoreObject.apply(this, arguments);
         
         // ... whatever your constructor does
-    };
+    }
     
     MyObject.prototype = new CoreObject();
     
