@@ -262,7 +262,7 @@ var MO5 = (function () {
                 
                 moduleOffset += 1;
             
-                MO5.loadModule(moduleName, loadModuleSuccessFn);
+                loadModule(moduleName, loadModuleSuccessFn);
                 
                 function loadModuleSuccessFn (module) {
             
@@ -381,7 +381,7 @@ var MO5 = (function () {
         "MO5.canvas.TextBox": MO5.path + "MO5.canvas.TextBox.js"
     };
     
-    MO5.loadModule = function (moduleName, onSuccess, onError) {
+    function loadModule (moduleName, onSuccess, onError) {
         
         onError = onError || function (e) { console.log(e.message, e.stack); };
         
@@ -394,7 +394,7 @@ var MO5 = (function () {
             onScriptLoadSuccess();
         }
         else {
-            MO5.loadScriptFile(MO5.modules[moduleName], onScriptLoadSuccess, onError);
+            MO5.loadScript(MO5.modules[moduleName], onScriptLoadSuccess, onError);
         }
         
         function onScriptLoadSuccess () {
@@ -405,11 +405,12 @@ var MO5 = (function () {
             }
         }
         
-    };
+    }
     
-    MO5.loadScriptFile = function (url, onSuccess, onError) {
+    MO5.loadScript = function (url, onSuccess, onError) {
         
         var isNode = typeof require !== "undefined" && typeof process !== "undefined";
+        var script = document.createElement("script");
         
         if (loadedScripts[url]) {
             onSuccess();
@@ -426,16 +427,16 @@ var MO5 = (function () {
             }
         }
         else {
-            MO5.ajax(MO5.ajax.HTTP_METHOD_GET, url, null, onAjaxSuccess, onError);
+            script.onload = onload;
+            script.onreadystatechange = onload;
+            script.src = url;
+            document.body.appendChild(script);
         }
         
-        function onAjaxSuccess (request) {
-            try {
-                eval(request.responseText);
+        function onload () {
+            if (!script.readyState || script.readyState === "loaded" || script.readyState === "complete") {
+                loadedScripts[url] = true;
                 onSuccess();
-            }
-            catch (e) {
-                console.log("Cannot eval contents of module file: ", e.message, e.stack);
             }
         }
     };
@@ -452,65 +453,3 @@ var MO5 = (function () {
     return MO5;
     
 }());
-
-
-//////////////////////////////////////
-// AJAX function
-//////////////////////////////////////
-
-(function (MO5) {
-    
-    var HTTP_STATUS_OK = 200;
-    var READY_STATE_UNSENT = 0;
-    var READY_STATE_OPENED = 1;
-    var READY_STATE_HEADERS_RECEIVED = 2;
-    var READY_STATE_LOADING = 3;
-    var READY_STATE_DONE = 4;
-    
-    MO5.ajax = function(method, url, data, onSuccess, onError) {
-        
-        var requestObject = XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
-        
-        requestObject.open(method, url + "?random=" + Math.random(), true);
-        
-        requestObject.onreadystatechange = function() {
-            var done, statusOk;
-            
-            done = requestObject.readyState === READY_STATE_DONE;
-            statusOk = requestObject.status === HTTP_STATUS_OK;
-            
-            if (done) {
-                if (statusOk) {
-                    onSuccess(requestObject);
-                }
-                else {
-                    onError(requestObject);
-                }
-            }
-        };
-        
-        if (data) {
-            requestObject.send(data);
-        }
-        else {
-            requestObject.send();
-        }
-        
-        return requestObject;
-    };
-    
-    MO5.ajax.HTTP_STATUS_OK = HTTP_STATUS_OK;
-    
-    MO5.ajax.READY_STATE_UNSENT = READY_STATE_UNSENT;
-    MO5.ajax.READY_STATE_OPENED = READY_STATE_OPENED;
-    MO5.ajax.READY_STATE_HEADERS_RECEIVED = READY_STATE_HEADERS_RECEIVED;
-    MO5.ajax.READY_STATE_LOADING = READY_STATE_LOADING;
-    MO5.ajax.READY_STATE_DONE = READY_STATE_DONE;
-    
-    MO5.ajax.HTTP_METHOD_GET = "GET";
-    MO5.ajax.HTTP_METHOD_POST = "POST";
-    MO5.ajax.HTTP_METHOD_PUT = "PUT";
-    MO5.ajax.HTTP_METHOD_DELETE = "DELETE";
-    MO5.ajax.HTTP_METHOD_HEAD = "HEAD";
-
-}(MO5));
