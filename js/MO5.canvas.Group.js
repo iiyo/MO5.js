@@ -37,19 +37,24 @@
 MO5("MO5.Exception", "MO5.CoreObject", "MO5.Map", "MO5.canvas.Object").
 define("MO5.canvas.Group", function (Exception, CoreObject, Map, CanvasObject) {
     
+    /**
+     * Constructor for canvas.Group objects.
+     * Inherits from MO5.CoreObject.
+     */
     function Group () {
-        
         CoreObject.call(this);
-        
         this.objects = new Map();
-        
     }
     
     Group.prototype = new CoreObject();
     
+    /**
+     * Adds a canvas.Object to the group.
+     * @param obj A canvas.Object instance.
+     */
     Group.prototype.add = function (obj) {
         
-        if (!(obj instanceof CanvasObject)) {
+        if (!obj.id || !(obj.implements(CanvasObject.prototype))) {
             throw new Exception("Parameter 1 must be an instance of " +
                 "MO5.canvas.Object.");
         }
@@ -59,16 +64,38 @@ define("MO5.canvas.Group", function (Exception, CoreObject, Map, CanvasObject) {
         return this;
     };
     
+    /**
+     * Removes an object from the group.
+     * @param obj A canvas.Object.
+     */
     Group.prototype.remove = function (obj) {
         this.objects.remove(+obj);
         return this;
     };
     
+    /**
+     * Is the given object registered with this group?
+     * @param obj A canvas.Object.
+     */
+    Group.prototype.isRegistered = function (obj) {
+        return this.objects.has(+obj);
+    };
+    
+    /**
+     * Applies a callback to all objects registered with the group.
+     * @param cb A callback function with signature 'function ()'.
+     */
     Group.prototype.forEach = function (cb) {
         this.objects.forEach(cb);
         return this;
     };
     
+    /**
+     * Calls a method on each object registered with the group.
+     * Ignores objects not having the method.
+     * @param name The name of the method to call.
+     * @param args The arguments to use with the call.
+     */
     Group.prototype.callMethod = function (name, args) {
         
         this.objects.forEach(function (item) {
@@ -83,6 +110,11 @@ define("MO5.canvas.Group", function (Exception, CoreObject, Map, CanvasObject) {
         return this;
     };
     
+    /**
+     * Applies a value to a property on each object registered with the group.
+     * @param name The name of the property.
+     * @param value The value to set for the property.
+     */
     Group.prototype.applyProperty = function (name, value) {
         
         this.objects.forEach(function (item) {

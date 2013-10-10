@@ -196,6 +196,11 @@ define("MO5.canvas.Canvas", function (CoreObject, List, Exception, Layer, tools)
         this.ct.clearRect(0, 0, this.cv.width, this.cv.height);
     };
     
+    /**
+     * Adds a canvas.Layer to the Canvas. You need to add at least one
+     * for the Canvas to draw anything.
+     * @param layer A canvas.Layer instance.
+     */
     Canvas.prototype.addLayer = function (layer) {
         
         if (!layer.implements(Layer.prototype)) {
@@ -207,6 +212,14 @@ define("MO5.canvas.Canvas", function (CoreObject, List, Exception, Layer, tools)
         return this;
     };
     
+    /**
+     * Checks which object is at the x/y offset and returns it.
+     * If the space at the coordinates is occupied by more than one
+     * object it returns the one in front. Returns null if there's
+     * no object at the offset.
+     * @param x The x offset.
+     * @param y The y offset.
+     */
     Canvas.prototype.objectAtOffset = function (x, y) {
         
         var queueOfLayers = this.layers.toQueue().reverse();
@@ -225,6 +238,12 @@ define("MO5.canvas.Canvas", function (CoreObject, List, Exception, Layer, tools)
         return objectToBeReturned;
     };
     
+    /**
+     * Returns all objects at the specified coordinates. Returns an empty
+     * array if no objects are at the coordinates.
+     * @param x The x offset.
+     * @param y The y offset.
+     */
     Canvas.prototype.objectsAtOffset = function (x, y) {
         
         var queueOfLayers = this.layers.toQueue().reverse();
@@ -244,11 +263,17 @@ define("MO5.canvas.Canvas", function (CoreObject, List, Exception, Layer, tools)
         return objectsToBeReturned;
     };
     
+    /**
+     * Starts drawing the canvas.
+     */
     Canvas.prototype.activate = function () {
         this.stopped = false;
         this.loop();
     };
     
+    /**
+     * Stops the drawing process of the canvas.
+     */
     Canvas.prototype.deactivate = function () {
         this.stopped = true;
     };
@@ -287,6 +312,9 @@ define("MO5.canvas.Canvas", function (CoreObject, List, Exception, Layer, tools)
             'px; top: ' + ((windowHeight - canvasHeight) / 2) + 'px;');
     };
 
+    /**
+     * Moves the Canvas to the center of the window.
+     */
     Canvas.prototype.moveToWindowCenter = function () {
         
         var windowDimensions = tools.getWindowDimensions(),
