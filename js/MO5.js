@@ -32,7 +32,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global window, require, process, document, XMLHttpRequest, ActiveXObject */
+/* global window, require, process, document */
 
 if (window) {
     // If the browser doesn't support requestAnimationFrame, use a fallback.
