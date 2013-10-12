@@ -110,7 +110,7 @@ define("MO5.transform", function (Exception, Timer, easing) {
             throw new Exception("MO5.transform expects parameter callback to be a function.");
         }
 
-        var dur = args.duration || 1000,
+        var dur = typeof args.duration !== "undefined" && args.duration >= 0 ? args.duration : 500,
             f,
             func,
             cv = from,
