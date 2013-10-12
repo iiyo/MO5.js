@@ -34,7 +34,7 @@
 
 /* global window, require, process, document */
 
-if (window) {
+if (typeof window !== "undefined") {
     // If the browser doesn't support requestAnimationFrame, use a fallback.
     window.requestAnimationFrame = (function ()
     {
@@ -342,10 +342,6 @@ var MO5 = (function () {
     MO5.path = "";
     
     (function () {
-        if (!document) {
-            return;
-        }
-        
         var scripts = document.getElementsByTagName("script");
         
         MO5.path = scripts[scripts.length - 1].src.replace(/MO5\.js$/, "");
@@ -409,7 +405,6 @@ var MO5 = (function () {
     
     MO5.loadScript = function (url, onSuccess, onError) {
         
-        var isNode = typeof require !== "undefined" && typeof process !== "undefined";
         var script = document.createElement("script");
         
         if (loadedScripts[url]) {
@@ -417,22 +412,16 @@ var MO5 = (function () {
             return;
         }
         
-        if (isNode) {
-            try {
-                require(url);
-                onSuccess();
-            }
-            catch (e) {
-                onError(e);
-            }
-        }
-        else {
+        try {
             script.onload = onload;
             script.onreadystatechange = onload;
             script.src = url;
             document.body.appendChild(script);
         }
-        
+        catch (e) {
+            onError(e);
+        }
+            
         function onload () {
             if (!script.readyState || script.readyState === "loaded" || script.readyState === "complete") {
                 loadedScripts[url] = true;
