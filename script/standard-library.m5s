@@ -1,3 +1,14 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; MO5 Script Standard Library
+;; ---------------------------
+;;
+;; (C) 2013 J. Steinbeck
+;;
+;; License: New BSD (see LICENSE file)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ; Evaluates a condition and if the condition is true,
 ; it evaluates all of the other arguments passed to
 ; the macro.
@@ -6,3 +17,12 @@
     (if (eval $a)
         (each $arguments (lambda ($item $i)
             (if (> $i 0) (eval $item))))))
+
+
+; Evaluates each expression given to it in order,
+; returning the result of the last expression
+; evaluated.
+(macro (progn)
+    (each $arguments (lambda ($item)
+        (eval $item))))
+
