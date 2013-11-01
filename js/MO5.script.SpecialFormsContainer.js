@@ -119,6 +119,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
     };
     
     SpecialFormsContainer.prototype["to-quote"] = function (execute, list, context) {
+        
         var quote = {
             type: Tokenizer.QUOTE,
             value: "quote",
@@ -126,7 +127,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
             column: list[0].column
         };
         
-        return [quote, list];
+        return [quote, list[1]];
     };
     
     SpecialFormsContainer.prototype.lambda = function (execute, list, context) {
