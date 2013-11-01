@@ -32,11 +32,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, require, module */
-
-if (typeof MO5 === "undefined" && typeof module !== "undefined") {
-    var MO5 = require("./MO5.js");
-}
+/* global MO5 */
 
 MO5("MO5.Exception", "MO5.fail", "MO5.EventBus").
 define("MO5.CoreObject", function (Exception, fail, EventBus) {
@@ -190,8 +186,6 @@ define("MO5.CoreObject", function (Exception, fail, EventBus) {
         delete this.valueOf;
         
     };
-    
-    module.exports = CoreObject;
     
     return CoreObject;
     
