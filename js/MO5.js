@@ -374,7 +374,13 @@ var MO5 = (function () {
         "MO5.canvas.ImagePack": MO5.path + "MO5.canvas.ImagePack.js",
         "MO5.canvas.Rain": MO5.path + "MO5.canvas.Rain.js",
         "MO5.canvas.Rectangle": MO5.path + "MO5.canvas.Rectangle.js",
-        "MO5.canvas.TextBox": MO5.path + "MO5.canvas.TextBox.js"
+        "MO5.canvas.TextBox": MO5.path + "MO5.canvas.TextBox.js",
+        "MO5.script.Tokenizer": MO5.path + "MO5.script.Tokenizer.js",
+        "MO5.script.Parser": MO5.path + "MO5.script.Parser.js",
+        "MO5.script.Context": MO5.path + "MO5.script.Context.js",
+        "MO5.script.SpecialFormsContainer": MO5.path + "MO5.script.SpecialFormsContainer.js",
+        "MO5.script.GlobalScope": MO5.path + "MO5.script.GlobalScope.js",
+        "MO5.script.Interpreter": MO5.path + "MO5.script.Interpreter.js"
     };
     
     function loadModule (moduleName, onSuccess, onError) {
