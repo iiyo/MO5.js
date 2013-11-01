@@ -105,6 +105,10 @@ define("MO5.script.GlobalScope", function (Map) {
         return a || b;
     };
     
+    GlobalScope.prototype.not = function (a) {
+        return !a;
+    };
+    
     GlobalScope.prototype.length = function (a) {
         return a.length;
     };
@@ -180,10 +184,17 @@ define("MO5.script.GlobalScope", function (Map) {
         return new Map();
     };
     
+    GlobalScope.prototype["#?"] = function (map) {
+        return (map.id && map.implements(new Map())) ? true : false;
+    };
+    
     /**
      * Adds a key-value pair to a hash table.
      */
     GlobalScope.prototype["#-set"] = function (map, key, value) {
+        
+        assert(map.id && map.implements(new Map()), "Procedure #-set expects its " +
+            "first argument to be a #");
         
         if (key && key.value) {
             key = key.value;
@@ -199,6 +210,9 @@ define("MO5.script.GlobalScope", function (Map) {
      */
     GlobalScope.prototype["#-get"] = function (map, key) {
         
+        assert(map.id && map.implements(new Map()), "Procedure #-get expects its " +
+            "first argument to be a #");
+        
         if (key && key.value) {
             key = key.value;
         }
@@ -208,10 +222,13 @@ define("MO5.script.GlobalScope", function (Map) {
     
     GlobalScope.prototype["#-has?"] = function (map, key) {
         
+        assert(map.id && map.implements(new Map()), "Procedure #-has? expects its " +
+            "first argument to be a #");
+        
         if (key && key.value) {
             key = key.value;
         }
-        
+        false
         return map.has(key);
     };
     
@@ -219,6 +236,9 @@ define("MO5.script.GlobalScope", function (Map) {
      * Removes a key-value pair from a hash table.
      */
     GlobalScope.prototype["#-remove"] = function (map, key) {
+        
+        assert(map.id && map.implements(new Map()), "Procedure #-remove expects its " +
+            "first argument to be a #");
         
         if (key && key.value) {
             key = key.value;
@@ -232,9 +252,8 @@ define("MO5.script.GlobalScope", function (Map) {
      */
     GlobalScope.prototype.defer = function (fun, duration) {
         
-        if (typeof fun !== "function") {
-            throw new Error("Procedure defer expects parameter 1 to be of type function");
-        }
+        assert(typeof fun === "function", 
+            "Procedure defer expects a procedure as its first argument");
         
         return setTimeout(fun, duration);
     };
@@ -242,6 +261,10 @@ define("MO5.script.GlobalScope", function (Map) {
     GlobalScope.prototype.range = function (start, end) {
         
         var range = [], i;
+        
+        assert(arguments.length === 2, "Procedure range expects exactly 2 arguments: start, end");
+        assert(typeof start === "number" && typeof end === "number", "Procedure range expects" +
+            " both its arguments to be of type number");
         
         start = start | 0;
         end = end | 0;
@@ -277,6 +300,7 @@ define("MO5.script.GlobalScope", function (Map) {
     };
     
     GlobalScope.prototype.round = function (a) {
+        assert(typeof a === "number", "Procedure round expects its parameter to be a number");
         return Math.round(a);
     };
     
