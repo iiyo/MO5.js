@@ -240,7 +240,7 @@ MO5().define("MO5.script.Tokenizer", function () {
                 return makeToken(Tokenizer.NIL, null, 3);
             }
             else if (word === "true" || word === "false") {
-                return makeToken(Tokenizer.BOOLEAN, word === true ? true : false, 
+                return makeToken(Tokenizer.BOOLEAN, word === "true" ? true : false, 
                     word.length);
             }
             
