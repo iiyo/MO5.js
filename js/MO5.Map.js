@@ -47,13 +47,21 @@ define("MO5.Map", function (CoreObject, Exception) {
         return k.replace(new RegExp(prefix), "");
     }
     
-    function Map () {
+    function Map (content) {
+        
+        var key;
         
         CoreObject.call(this);
         
         this.items = {};
         this.unsubscribers = {};
         this.count = 0;
+        
+        if (content) {
+            for (key in content) {
+                this.set(key, content[key]);
+            }
+        }
     }
     
     Map.prototype = new CoreObject();
@@ -138,7 +146,7 @@ define("MO5.Map", function (CoreObject, Exception) {
         
         var key = makeKey(k);
         
-        if (!this.has(key)) {
+        if (!this.has(k)) {
             throw new Exception("Trying to remove an unknown key from an MO5.Map.");
         }
         
