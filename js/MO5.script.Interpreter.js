@@ -5,11 +5,7 @@ define("MO5.script.Interpreter",
 function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
     
     function Interpreter () {
-        this.parser = new Parser();
-        this.forms = new FormsContainer();
-        this.context = new Context(new GlobalScope());
-        this.lastLine = 0;
-        this.lastColumn = 0;
+        this.reset();
     }
     
     Interpreter.TypeError = function (message, line, column) {
@@ -30,6 +26,23 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
     
     Interpreter.ReferenceError.prototype = new Error();
     
+    Interpreter.ScriptError = function (message, line, column) {
+        this.name = "ScriptError";
+        this.message = message || "";
+        this.scriptLine = line;
+        this.scriptColumn = column;
+    };
+    
+    Interpreter.ScriptError.prototype = new Error();
+    
+    Interpreter.prototype.reset = function () {
+        this.parser = new Parser();
+        this.forms = new FormsContainer();
+        this.context = new Context(new GlobalScope());
+        this.lastLine = 0;
+        this.lastColumn = 0;
+    };
+    
     Interpreter.prototype.execute = function (input, context) {
         
         var ast, value, self = this;
@@ -49,8 +62,6 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
         
         var text = "";
         
-        console.log("value in scriptValueToString: ", value);
-        
         function makeString (val) {
             if (!val || !Array.isArray(val)) {
                 
@@ -58,7 +69,12 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
                     val = val.value;
                 }
                 
-                text += "" + val;
+                if (typeof val === "number" && val < 0) {
+                    text += "(- " + Math.abs(val) + ")"; 
+                }
+                else {
+                    text += "" + val;
+                }
                 
                 return;
             }
@@ -100,6 +116,10 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
             return executeListInContext(interpreter, input, context);
         }
         
+        if (typeof input === "undefined") {
+            return null;
+        }
+        
         if (input.type) {
             interpreter.lastLine = input.line;
             interpreter.lastColumn = input.column;
@@ -111,16 +131,25 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
                 return interpreter.forms[input.value];
             }
             
-            value = context.find(input.value);
-            
-            if (typeof value === "undefined") {
-                throw new Interpreter.ReferenceError("Unbound symbol '" + input.value + "'", input.line, input.column);
+            if (!context.has(input.value)) {
+                throw new Interpreter.ReferenceError("Unbound symbol '" + input.value + 
+                    "'", input.line, input.column);
             }
+            
+            value = executeInContext(interpreter, context.find(input.value), context);
             
             return value;
         }
         
-        return input.value;
+        if (input.type === Tokenizer.STRING || input.type === Tokenizer.NUMBER) {
+            return input.value;
+        }
+        
+        if (typeof input === "function") {
+            return input;
+        }
+        
+        return typeof input.value === "undefined" ? input : input.value;
     }
     
     function executeListInContext (interpreter, list, context) {
@@ -141,7 +170,7 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
         
         if (firstIsToken) {
             interpreter.lastLine = list[0].line;
-            interpreter.lastLine = list[0].column;
+            interpreter.lastColumn = list[0].column;
         }
         
         if (firstIsToken && list[0].value in interpreter.forms) {
@@ -149,11 +178,16 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
             return interpreter.forms[list[0].value](execute, list, context);
         }
         
+        if (firstIsToken && context.hasMacro(list[0].value)) {
+            //console.log("Executing special form: ", list[0]);
+            return context.findMacro(list[0].value)(list.slice(1));
+        }
+        
         if (firstIsToken && list[0].type && list[0].type !== Tokenizer.SYMBOL) {
             throw new Interpreter.TypeError("Head " + list[0].value + " of list " +
                 "is not a function", list[0].line, list[0].column);
         }
-        else if (firstIsToken && list[0].type && context.find(list[0].value) === undefined) {
+        else if (firstIsToken && list[0].type && !context.has(list[0].value)) {
             throw new Interpreter.ReferenceError("Unbound symbol '" + list[0].value + "'", 
                 list[0].line, list[0].column);
         }

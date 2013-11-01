@@ -1,4 +1,5 @@
-MO5().define("MO5.script.Tokenizer", function (out) {
+/* global MO5 */
+MO5().define("MO5.script.Tokenizer", function () {
     
     "use strict";
     
@@ -8,7 +9,7 @@ MO5().define("MO5.script.Tokenizer", function (out) {
     [
         "ILLEGAL_TOKEN", "COMMENT", "STRING", "OPENING_PAREN", 
         "CLOSING_PAREN", "SYMBOL", "NUMBER", "BOOLEAN", "QUOTE",
-        "BACKQUOTE", "COMMA"
+        "BACKQUOTE", "COMMA", "NIL"
     ].forEach((function () {
         var i = -1;
         
@@ -204,7 +205,6 @@ MO5().define("MO5.script.Tokenizer", function (out) {
         
         function makeToken (type, value, realLength, realLine, realColumn) {
             
-            value = value || "";
             realLength = typeof realLength === "number" ? realLength : ("" + value).length;
             realLine = typeof realLine === "number" ? realLine : line + 1;
             realColumn = typeof realColumn === "number" ? realColumn : column - realLength + 1;
@@ -231,13 +231,17 @@ MO5().define("MO5.script.Tokenizer", function (out) {
             var word = advanceAll(/[^\(\) \n]/);
             
             if (word === "nan") {
-                return makeToken(Tokenizer.NAN, NaN);
+                return makeToken(Tokenizer.NAN, NaN, 3);
             }
             else if (word === "infinity") {
-                return makeToken(Tokenizer.INFINITY, Infinity);
+                return makeToken(Tokenizer.INFINITY, Infinity, "infinity".length);
+            }
+            else if (word === "nil") {
+                return makeToken(Tokenizer.NIL, null, 3);
             }
             else if (word === "true" || word === "false") {
-                return makeToken(Tokenizer.BOOLEAN, word);
+                return makeToken(Tokenizer.BOOLEAN, word === true ? true : false, 
+                    word.length);
             }
             
             return makeToken(Tokenizer.SYMBOL, word);

@@ -26,8 +26,33 @@ define("MO5.script.Parser", function (Exception, Tokenizer) {
             throw new Tokenizer.ParseError("Unexpected end of input", lastItem.line, lastItem.column);
         }
         
+        expandQuotes(ast);
+        
         return ast;
     };
+    
+    function expandQuotes (ast) {
+        
+        var leaf, i;
+        
+        for (i = 0; i < ast.length; i += 1) {
+            
+            leaf = ast[i];
+            
+            if (Array.isArray(leaf)) {
+                expandQuotes(leaf);
+                continue;
+            }
+            
+            if (leaf.type === Tokenizer.QUOTE) {
+                leaf.type = Tokenizer.SYMBOL;
+                leaf.value = "quote";
+                ast[i] = [leaf, ast[i + 1]];
+                ast.splice(i + 1, 1);
+                console.log(ast);
+            }
+        }
+    }
     
     function tokensToList (tokens, list, counter) {
         
@@ -62,13 +87,6 @@ define("MO5.script.Parser", function (Exception, Tokenizer) {
             
             list.push(tokensToList(tokens, subList, counter));
             
-            return tokensToList(tokens, list, counter);
-        }
-        
-        if (token.type === Tokenizer.QUOTE) {
-            token.type = Tokenizer.SYMBOL;
-            token.value = "quote";
-            list.push(tokensToList(tokens, [token], counter));
             return tokensToList(tokens, list, counter);
         }
         

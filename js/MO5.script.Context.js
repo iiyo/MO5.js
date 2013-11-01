@@ -1,5 +1,9 @@
 /* global MO5 */
 MO5().define("MO5.script.Context", function () {
+    
+    function makeKey (name) {
+        return "MO5.Script." + name;
+    }
 
     /**
      * A class representing the context in which a script
@@ -8,8 +12,13 @@ MO5().define("MO5.script.Context", function () {
      * @param parentScope The parent scope of the current scope. Is optional.
      */
     function  Context (scope, parentContext) {
-        this.scope = scope;
+        this.scope = {};
+        this.macros = {};
         this.parentContext = parentContext;
+        
+        for (var key in scope) {
+            this.scope[makeKey(key)] = scope[key];
+        }
     }
     
     /**
@@ -21,8 +30,8 @@ MO5().define("MO5.script.Context", function () {
      */
     Context.prototype.find = function (symbol) {
         
-        if (symbol in this.scope) {
-            return this.scope[symbol];
+        if (makeKey(symbol) in this.scope) {
+            return this.scope[makeKey(symbol)];
         }
         
         if (this.parentContext) {
@@ -30,8 +39,61 @@ MO5().define("MO5.script.Context", function () {
         }
     };
     
+    Context.prototype.findMacro = function (name) {
+        
+        if (makeKey(name) in this.macros) {
+            return this.macros[makeKey(name)];
+        }
+        
+        if (this.parentContext) {
+            return this.parentContext.findMacro(name);
+        }
+    };
+    
     Context.prototype.set = function (name, value) {
-        this.scope[name] = value;
+        this.scope[makeKey(name)] = value;
+    };
+    
+    Context.prototype.setMacro = function (name, value) {
+        this.macros[makeKey(name)] = value;
+    };
+    
+    Context.prototype.has = function (name) {
+        return makeKey(name) in this.scope || 
+            (this.parentContext && this.parentContext.has(name));
+    };
+    
+    Context.prototype.hasMacro = function (name) {
+        return makeKey(name) in this.macros || 
+            (this.parentContext && this.parentContext.hasMacro(name));
+    };
+    
+    Context.prototype.change = function (name, value) {
+        if (makeKey(name) in this.scope) {
+            this.scope[makeKey(name)] = value;
+        }
+        else {
+            if (!this.parentContext) {
+                throw new Error("Unknown variable");
+            }
+            else {
+                this.parentContext.change(name, value);
+            }
+        }
+    };
+    
+    Context.prototype.changeMacro = function (name, value) {
+        if (makeKey(name) in this.macros) {
+            this.macros[makeKey(name)] = value;
+        }
+        else {
+            if (!this.parentContext) {
+                throw new Error("Unknown variable");
+            }
+            else {
+                this.parentContext.changeMacro(name, value);
+            }
+        }
     };
 
     return Context;
