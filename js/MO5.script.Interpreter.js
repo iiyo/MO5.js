@@ -72,6 +72,9 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
                 if (typeof val === "number" && val < 0) {
                     text += "(- " + Math.abs(val) + ")"; 
                 }
+                else if (typeof val === "undefined") {
+                    text += "nil";
+                }
                 else {
                     text += "" + val;
                 }
@@ -198,7 +201,24 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
         });
         
         if (typeof executedList[0] === "function") {
-            return executedList[0].apply(undefined, executedList.slice(1));
+            return (function () {
+                
+                var val;
+                
+                try {
+                    val = executedList[0].apply(undefined, executedList.slice(1));
+                }
+                catch (e) {
+                    if (!e.scriptLine) {
+                        e.scriptLine = interpreter.lastLine;
+                        e.scriptColumn = interpreter.lastColumn;
+                    }
+                    
+                    throw e;
+                }
+            
+                return val;
+            }());
         }
         
         return execute(executedList, context);
