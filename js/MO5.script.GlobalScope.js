@@ -228,7 +228,7 @@ define("MO5.script.GlobalScope", function (Map) {
         if (key && key.value) {
             key = key.value;
         }
-        false
+        
         return map.has(key);
     };
     
@@ -307,8 +307,6 @@ define("MO5.script.GlobalScope", function (Map) {
     GlobalScope.prototype.each = function (arr, fun) {
         
         var returnValue;
-        
-        console.log("arr:", arr, typeof arr, Array.isArray(arr));
         
         if (!Array.isArray(arr)) {
             throw new Error("Procedure each expects parameter 1 to be of type list");

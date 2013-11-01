@@ -19,7 +19,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
             listToEvaluate = list[1];
         }
         
-        console.log("listToEvaluate:", listToEvaluate);
+        //console.log("listToEvaluate:", listToEvaluate);
         
         return execute(listToEvaluate, context);
     };
@@ -33,7 +33,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
         function lambda () {
             var scope = {}, args = [].slice.call(arguments), ret, newContext;
             
-            console.log("list in call to macro: ", list, "; context:", context);
+            //console.log("list in call to macro: ", list, "; context:", context);
             
             list[1].slice(1).forEach(function (item, i) {
                 scope[item.value] = args[0][i];
@@ -44,7 +44,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
                 value: "quote"
             }, args[0]];
             
-            console.log("scope in macro:", scope);
+            //console.log("scope in macro:", scope);
             
             newContext = new Context(scope, context);
             
@@ -105,7 +105,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
     
     SpecialFormsContainer.prototype["if"] = function (execute, list, context) {
         
-        console.log("list[1] in if: ", list[1]);
+        //console.log("list[1] in if: ", list[1]);
         
         if (execute(list[1], context)) {
             return execute(list[2], context);
@@ -135,7 +135,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
         function lambda () {
             var scope = {}, args = arguments, ret, newContext;
             
-            console.log("list in call to lambda: ", list, "; context:", context);
+            //console.log("list in call to lambda: ", list, "; context:", context);
             
             list[1].forEach(function (item, i) {
                 scope[item.value] = args[i];

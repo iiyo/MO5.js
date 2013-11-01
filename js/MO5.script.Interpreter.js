@@ -1,11 +1,15 @@
 /* global MO5 */
 MO5("MO5.script.Tokenizer", "MO5.script.Parser", "MO5.script.Context", 
-    "MO5.script.GlobalScope", "MO5.script.SpecialFormsContainer").
+    "MO5.script.GlobalScope", "MO5.script.SpecialFormsContainer",
+    "ajax:" + MO5.path + "../script/standard-library.m5s").
 define("MO5.script.Interpreter", 
-function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
+function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryRequest) {
+    
+    var libraryText = libraryRequest.responseText;
     
     function Interpreter () {
         this.reset();
+        this.execute(libraryText);
     }
     
     Interpreter.TypeError = function (message, line, column) {
@@ -132,6 +136,10 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
             
             if (input.value in interpreter.forms) {
                 return interpreter.forms[input.value];
+            }
+            
+            if (context.hasMacro(input.value)) {
+                return context.findMacro(input.value);
             }
             
             if (!context.has(input.value)) {

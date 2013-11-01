@@ -1,0 +1,8 @@
+; Evaluates a condition and if the condition is true,
+; it evaluates all of the other arguments passed to
+; the macro.
+(macro (when $a)
+
+    (if (eval $a)
+        (each $arguments (lambda ($item $i)
+            (if (> $i 0) (eval $item))))))
