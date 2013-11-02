@@ -183,7 +183,8 @@ MO5().define("MO5.script.Tokenizer", function () {
                 return true;
             }
             else if (char === ";") {
-                token = advanceComment();
+                advanceComment();
+                return true;
             }
             else if (char === '"') {
                 token = advanceDoubleQuotedString();
@@ -285,7 +286,7 @@ MO5().define("MO5.script.Tokenizer", function () {
             
             while (advance()) {
                 if (opParens === 0 && currentChar !== "(") {
-                    expression += advanceAll(/[^\(\) \n]/);
+                    expression += advanceAll(/[^\(\) \n']/);
                     break;
                 }
                 

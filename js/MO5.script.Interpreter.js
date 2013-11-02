@@ -147,7 +147,7 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
                     "'", input.line, input.column);
             }
             
-            value = executeInContext(interpreter, context.find(input.value), context);
+            value = context.find(input.value);
             
             return value;
         }
@@ -191,7 +191,7 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
         
         if (firstIsToken && context.hasMacro(list[0].value)) {
             //console.log("Executing special form: ", list[0]);
-            return context.findMacro(list[0].value)(list.slice(1));
+            return context.findMacro(list[0].value)(context, list.slice(1));
         }
         
         if (firstIsToken && list[0].type && list[0].type !== Tokenizer.SYMBOL) {
@@ -227,6 +227,11 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
             
                 return val;
             }());
+        }
+        
+        if (!executedList[0].type) {
+            throw new Interpreter.TypeError("Head " + (executedList[0].value || executedList[0]) + 
+                " of list is not a function", interpreter.lastLine, interpreter.lastColumn);
         }
         
         return execute(executedList, context);

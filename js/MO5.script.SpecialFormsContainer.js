@@ -21,6 +21,10 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
         
         //console.log("listToEvaluate:", listToEvaluate);
         
+        if (listToEvaluate.type && listToEvaluate.type === Tokenizer.SYMBOL) {
+            listToEvaluate = context.find(listToEvaluate.value);
+        }
+        
         return execute(listToEvaluate, context);
     };
     
@@ -30,8 +34,8 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
         
         name = list[1][0].value;
         
-        function lambda () {
-            var scope = {}, args = [].slice.call(arguments), ret, newContext;
+        function macro (ctx) {
+            var scope = {}, args = [].slice.call(arguments, 1), ret, newContext;
             
             //console.log("list in call to macro: ", list, "; context:", context);
             
@@ -39,14 +43,11 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
                 scope[item.value] = args[0][i];
             });
             
-            scope.$arguments = [{
-                type: Tokenizer.QUOTE,
-                value: "quote"
-            }, args[0]];
+            scope.$arguments = args[0];
             
             //console.log("scope in macro:", scope);
             
-            newContext = new Context(scope, context);
+            newContext = new Context(scope, ctx);
             
             list.slice(2).forEach(function (item) {
                 ret = execute(item, newContext);
@@ -55,11 +56,17 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
             return ret;
         }
         
-        lambda.__argsCount__ = list[1].length || 0;
+        macro.__argsCount__ = list[1].length || 0;
+        macro.isMacro = true;
         
-        context.setMacro(name, lambda);
+        context.setMacro(name, macro);
         
-        return lambda;
+        return macro;
+    };
+    
+    SpecialFormsContainer.prototype["exists?"] = function (execute, list, context) {
+        return !!(list[1] && list[1].type && list[1].type === Tokenizer.SYMBOL && 
+            (context.has(list[1].value) || context.hasMacro(list[1].value)));
     };
     
     SpecialFormsContainer.prototype.define = function (execute, list, context) {
@@ -115,13 +122,25 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
     };
     
     SpecialFormsContainer.prototype.quote = function (execute, list, context) {
+        
+        if (Array.isArray(list[1])) {
+            list[1].forEach(function (item, i) {
+                list[1][i] = item.type && isPrimitive(item.type) ? item.value : item;
+            });
+            return list[1];
+        }
+        
         return list[1];
     };
+    
+    function isPrimitive (type) {
+        return type === Tokenizer.NUMBER || type === Tokenizer.STRING || type === Tokenizer.BOOLEAN;
+    }
     
     SpecialFormsContainer.prototype["to-quote"] = function (execute, list, context) {
         
         var quote = {
-            type: Tokenizer.QUOTE,
+            type: Tokenizer.SYMBOL,
             value: "quote",
             line: list[0].line,
             column: list[0].column

@@ -264,7 +264,7 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer) {
             key = key.value;
         }
         
-        console.log("Getting key/value on #:", key, value);
+        console.log("Getting key on #:", key);
         
         return map.get(key);
     };
@@ -277,6 +277,8 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer) {
         if (key && key.value) {
             key = key.value;
         }
+        
+        console.log("Checking key on #:", key);
         
         return map.has(key);
     };

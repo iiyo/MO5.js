@@ -45,12 +45,29 @@ define("MO5.script.Parser", function (Exception, Tokenizer) {
             }
             
             if (leaf.type === Tokenizer.QUOTE) {
-                leaf.type = Tokenizer.SYMBOL;
-                leaf.value = "quote";
-                ast[i] = [leaf, ast[i + 1]];
-                ast.splice(i + 1, 1);
-                console.log(ast);
+                //leaf.type = Tokenizer.SYMBOL;
+                //leaf.value = "quote";
+                //ast[i] = [leaf, ast[i + 1]];
+                //ast.splice(i + 1, 1);
+                ast[i] = toQuote(ast, i);
             }
+        }
+    }
+    
+    function toQuote (ast, i) {
+        var leaf = ast[i];
+        var next = ast[i + 1];
+        
+        leaf.type = Tokenizer.SYMBOL;
+        leaf.value = "quote";
+        
+        ast.splice(i + 1, 1);
+        
+        if (next && next.type === Tokenizer.QUOTE) {
+            return [leaf, toQuote(ast, i)];
+        }
+        else {
+            return [leaf, next];
         }
     }
     
