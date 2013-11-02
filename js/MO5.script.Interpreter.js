@@ -9,7 +9,8 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
     
     function Interpreter () {
         this.reset();
-        this.execute(libraryText);
+        this.execute(libraryText, "standard-library.m5s");
+        this.lastFileName = "(unknown file)";
     }
     
     Interpreter.TypeError = function (message, line, column) {
@@ -47,13 +48,16 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
         this.lastColumn = 0;
     };
     
-    Interpreter.prototype.execute = function (input, context) {
+    Interpreter.prototype.execute = function (input, fileName, context) {
         
         var ast, value, self = this;
         
+        fileName = fileName || "(unknown file)";
         context = context || this.context;
         
-        ast = this.parser.parse(input);
+        this.lastFileName = fileName;
+        
+        ast = this.parser.parse(input, fileName);
         
         ast.forEach(function (leaf) {
             value = executeInContext(self, leaf, context);
@@ -220,6 +224,7 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
                     if (!e.scriptLine) {
                         e.scriptLine = interpreter.lastLine;
                         e.scriptColumn = interpreter.lastColumn;
+                        e.fileName = interpreter.lastFileName;
                     }
                     
                     throw e;

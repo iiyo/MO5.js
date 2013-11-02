@@ -48,7 +48,7 @@ MO5().define("MO5.script.Tokenizer", function () {
         return undefined;
     };
     
-    Tokenizer.prototype.tokenize = function (text) {
+    Tokenizer.prototype.tokenize = function (text, fileName) {
     
         var tokens = [], line = 0, column = 0, charOffset = -1, currentChar = null, lastColumn = 0;
         
@@ -215,7 +215,8 @@ MO5().define("MO5.script.Tokenizer", function () {
                 line: realLine,
                 column: realColumn,
                 value: value,
-                length: realLength
+                length: realLength,
+                fileName: fileName
             };
         }
         

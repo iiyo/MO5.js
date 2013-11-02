@@ -4,6 +4,17 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
 
     function SpecialFormsContainer () {}
     
+    SpecialFormsContainer.prototype.progn = function (execute, list, context) {
+        
+        var returnValue;
+        
+        list.slice(1).forEach(function (item) {
+            returnValue = execute(item, context);
+        });
+        
+        return returnValue;
+    };
+    
     SpecialFormsContainer.prototype["eval"] = function (execute, list, context) {
         var listToEvaluate;
         
@@ -26,6 +37,10 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
         }
         
         return execute(listToEvaluate, context);
+    };
+    
+    SpecialFormsContainer.prototype["dump-context"] = function (execute, list, context) {
+        console.log(context);
     };
     
     SpecialFormsContainer.prototype.macro = function (execute, list, context) {

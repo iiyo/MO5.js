@@ -8,17 +8,19 @@ define("MO5.script.Parser", function (Exception, Tokenizer) {
      */
     function Parser () {
         this.tokenizer = new Tokenizer();
+        this.currentFileName = "(unknown file)";
     }
     
     /**
      * Parses an input string and returns an abstract syntax tree.
      */
-    Parser.prototype.parse = function (input) {
+    Parser.prototype.parse = function (input, fileName) {
         
         var tokens, ast, counter, lastItem;
         
+        this.currentFileName = fileName;
         counter = {opParens: 0, clParens: 0};
-        tokens = this.tokenizer.tokenize(input);
+        tokens = this.tokenizer.tokenize(input, fileName);
         ast = tokensToList(tokens, [], counter);
         
         if (counter.opParens !== counter.clParens) {

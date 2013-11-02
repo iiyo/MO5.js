@@ -195,6 +195,18 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer) {
         }
     };
     
+    GlobalScope.prototype["append!"] = function (item, list) {
+        assert(Array.isArray(list), "Procedure append! expects a list as its second argument");
+        list.push(item);
+        return list;
+    };
+    
+    GlobalScope.prototype["prepend!"] = function (item, list) {
+        assert(Array.isArray(list), "Procedure prepend! expects a list as its second argument");
+        list.unshift(item);
+        return list;
+    };
+    
     GlobalScope.prototype.append = makeAddItemToListFn("push", "append");
     GlobalScope.prototype.prepend = makeAddItemToListFn("unshift", "prepend");
     
@@ -263,8 +275,6 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer) {
         if (key && key.value) {
             key = key.value;
         }
-        
-        console.log("Getting key/value on #:", key, value);
         
         return map.get(key);
     };

@@ -10,28 +10,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-; Evaluates each expression given to it in order,
-; returning the result of the last expression
-; evaluated.
-(macro (progn)
-    (each $arguments (lambda ($item)
-        (eval $item))))
-
-
 ; Evaluates a condition and if the condition is true,
 ; it evaluates all of the other arguments passed to
 ; the macro.
 (macro (when $a)
+    (define $pgn '(progn))
     (if (eval $a)
         (each $arguments (lambda ($item $i)
-            (if (> $i 0) (eval $item))))))
+            (if (> $i 0) (set $pgn (append $item $pgn))))))
+    (eval $pgn))
 
 (macro (unless $c)
     (if (not (eval $c))
         (each $arguments (lambda ($item $i) 
             (if (> $i 0)
                 (eval $item))))))
-
 
 
 (define (object)
@@ -47,15 +40,12 @@
         (if (#-has? h message)
         
             (progn
-                (print "has message")
-                (define property (#-get h message)
-                (print property)
+                (define property (#-get h message))
                 (if (procedure? property)
                     (apply property (tail arguments))
-                    property)))
+                    property))
                     
             (progn
-                (print "does not have message")
                 (if (> (length arguments) 1)
                     (#-set h message value)
                     (print "unexpected number of arguments"))))))
