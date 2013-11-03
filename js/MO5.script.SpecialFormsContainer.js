@@ -16,7 +16,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
     };
     
     SpecialFormsContainer.prototype["eval"] = function (execute, list, context) {
-        var listToEvaluate;
+        var listToEvaluate, error;
         
         if (list.length !== 2) {
             throw new Error("Special form eval takes exactly one argument.");
@@ -33,6 +33,14 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
         //console.log("listToEvaluate:", listToEvaluate);
         
         if (listToEvaluate.type && listToEvaluate.type === Tokenizer.SYMBOL) {
+            if (!context.has(listToEvaluate.value)) {
+                error = new Error("Unbound symbol '" + listToEvaluate.value + "'");
+                error.scriptLine = listToEvaluate.line;
+                error.scriptColumn = listToEvaluate.column;
+                error.fileName = "(eval'd code)";
+                throw error;
+            }
+            
             listToEvaluate = context.find(listToEvaluate.value);
         }
         

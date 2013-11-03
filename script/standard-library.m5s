@@ -14,18 +14,19 @@
 ; it evaluates all of the other arguments passed to
 ; the macro.
 (macro (when $a)
-    (define $pgn '(progn))
+    (define $pgn (tail $arguments))
     (if (eval $a)
-        (each $arguments (lambda ($item $i)
-            (if (> $i 0) (set $pgn (append $item $pgn))))))
-    (eval $pgn))
+        (progn
+            (prepend! (to-quote progn) $pgn)
+            (eval $pgn))))
 
 (macro (unless $c)
+    (define $pgn (tail $arguments))
     (if (not (eval $c))
-        (each $arguments (lambda ($item $i) 
-            (if (> $i 0)
-                (eval $item))))))
-
+        (progn
+            (prepend! (to-quote progn) $pgn)
+            (eval $pgn))))
+  
 
 (define (object)
     (define h (#))

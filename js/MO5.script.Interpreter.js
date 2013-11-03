@@ -127,7 +127,7 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
             return executeListInContext(interpreter, input, context);
         }
         
-        if (typeof input === "undefined") {
+        if (!input && (typeof input === "undefined" || typeof input === "object")) {
             return null;
         }
         
