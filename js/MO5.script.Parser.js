@@ -1,6 +1,6 @@
 /* global MO5 */
-MO5("MO5.Exception", "MO5.script.Tokenizer").
-define("MO5.script.Parser", function (Exception, Tokenizer) {
+MO5("MO5.Exception", "MO5.script.Tokenizer", "MO5.script.Pair").
+define("MO5.script.Parser", function (Exception, Tokenizer, Pair) {
 
     /**
      * Parser class for parsing MO5 Script or another
@@ -21,7 +21,9 @@ define("MO5.script.Parser", function (Exception, Tokenizer) {
         this.currentFileName = fileName;
         counter = {opParens: 0, clParens: 0};
         tokens = this.tokenizer.tokenize(input, fileName);
-        ast = tokensToList(tokens, [], counter);
+        ast = tokensToList(tokens, counter);
+        
+        console.log(ast);
         
         if (counter.opParens !== counter.clParens) {
             lastItem = counter.lastToken;
@@ -47,10 +49,6 @@ define("MO5.script.Parser", function (Exception, Tokenizer) {
             }
             
             if (leaf.type === Tokenizer.QUOTE) {
-                //leaf.type = Tokenizer.SYMBOL;
-                //leaf.value = "quote";
-                //ast[i] = [leaf, ast[i + 1]];
-                //ast.splice(i + 1, 1);
                 ast[i] = toQuote(ast, i);
             }
         }
@@ -73,12 +71,12 @@ define("MO5.script.Parser", function (Exception, Tokenizer) {
         }
     }
     
-    function tokensToList (tokens, list, counter) {
+    function tokensToList (tokens, counter) {
         
-        var token = tokens.shift(), subList;
+        var token = tokens.shift(), pair;
         
         if (typeof token === "undefined") {
-            return list;
+            return null;
         }
         
         counter.lastToken = token;
@@ -87,31 +85,29 @@ define("MO5.script.Parser", function (Exception, Tokenizer) {
             
             counter.clParens += 1;
             
-            list.lastLine = token.line;
-            list.lastColumn = token.column;
-            
             if (counter.opParens < counter.clParens) {
                 throw new Tokenizer.ParseError("Unexpected closing paren", token.line, token.column);
             }
             
-            return list;
+            return null;
         }
         
         if (token.type === Tokenizer.OPENING_PAREN) {
             counter.opParens += 1;
-            subList = [];
             
-            subList.firstLine = token.line;
-            subList.firstColumn = token.column;
+            pair = new Pair();
             
-            list.push(tokensToList(tokens, subList, counter));
+            pair.head = tokensToList(tokens, counter);
+            pair.tail = tokensToList(tokens, counter);
             
-            return tokensToList(tokens, list, counter);
+            return pair;
         }
         
-        list.push(token);
+        pair = new Pair();
+        pair.head = token;
+        pair.tail = tokensToList(tokens, counter);
         
-        return tokensToList(tokens, list, counter);
+        return pair;
     }
     
     return Parser;

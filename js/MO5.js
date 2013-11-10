@@ -397,7 +397,8 @@ var MO5 = (function () {
         "MO5.script.Context": MO5.path + "MO5.script.Context.js",
         "MO5.script.SpecialFormsContainer": MO5.path + "MO5.script.SpecialFormsContainer.js",
         "MO5.script.GlobalScope": MO5.path + "MO5.script.GlobalScope.js",
-        "MO5.script.Interpreter": MO5.path + "MO5.script.Interpreter.js"
+        "MO5.script.Interpreter": MO5.path + "MO5.script.Interpreter.js",
+        "MO5.script.Pair": MO5.path + "MO5.script.Pair.js"
     };
     
     function loadModule (moduleName, onSuccess, onError) {

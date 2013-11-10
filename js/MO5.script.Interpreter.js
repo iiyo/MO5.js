@@ -1,9 +1,9 @@
 /* global MO5 */
 MO5("MO5.script.Tokenizer", "MO5.script.Parser", "MO5.script.Context", 
-    "MO5.script.GlobalScope", "MO5.script.SpecialFormsContainer",
+    "MO5.script.GlobalScope", "MO5.script.SpecialFormsContainer", "MO5.script.Pair",
     "ajax:" + MO5.path + "../script/standard-library.m5s").
 define("MO5.script.Interpreter", 
-function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryRequest) {
+function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, Pair, libraryRequest) {
     
     var libraryText = libraryRequest.responseText;
     
@@ -50,7 +50,7 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
     
     Interpreter.prototype.execute = function (input, fileName, context) {
         
-        var ast, value, self = this;
+        var ast, value, self = this, list;
         
         fileName = fileName || "(unknown file)";
         context = context || this.context;
@@ -59,9 +59,16 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
         
         ast = this.parser.parse(input, fileName);
         
-        ast.forEach(function (leaf) {
-            value = executeInContext(self, leaf, context);
-        });
+        if (ast.tail) {
+            list = Pair.toArray(ast);
+            console.log("list:", list);
+            list.forEach(function (item) {
+                value = executeInContext(self, item.head, context);
+            });
+        }
+        else {
+            value = executeInContext(self, ast, context);
+        }
         
         return value;
     };
@@ -112,31 +119,34 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
     
     return Interpreter;
     
+    function isObject (thing) {
+        return (typeof thing === "object" && thing !== null);
+    }
     
     function executeInContext (interpreter, input, context) {
         
         var value;
         
-        if (Array.isArray(input)) {
+        if (isObject(input) && input.head) {
             
-            if (input.firstLine) {
-                interpreter.lastLine = input.firstLine;
-                interpreter.lastColumn = input.firstColumn;
+            if (input.head.line) {
+                interpreter.lastLine = input.head.line;
+                interpreter.lastColumn = input.head.column;
             }
             
-            return executeListInContext(interpreter, input, context);
+            return executePairInContext(interpreter, input, context);
         }
         
-        if (!input && (typeof input === "undefined" || typeof input === "object")) {
+        if (!isObject(input) && (typeof input === "undefined" || typeof input === "object")) {
             return null;
         }
         
-        if (input.type) {
+        if (isObject(input) && input.type) {
             interpreter.lastLine = input.line;
             interpreter.lastColumn = input.column;
         }
         
-        if (input.type === Tokenizer.SYMBOL) {
+        if (isinputect(input) && input.type === Tokenizer.SYMBOL) {
             
             if (input.value in interpreter.forms) {
                 return interpreter.forms[input.value];
@@ -147,6 +157,7 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
             }
             
             if (!context.has(input.value)) {
+                console.log("context:", context);
                 throw new Interpreter.ReferenceError("Unbound symbol '" + input.value + 
                     "'", input.line, input.column);
             }
@@ -156,7 +167,8 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
             return value;
         }
         
-        if (input.type === Tokenizer.STRING || input.type === Tokenizer.NUMBER) {
+        if (isinputect(input) && input.type === Tokenizer.STRING || input.type === Tokenizer.NUMBER ||
+                input.type === Tokenizer.BOOLEAN) {
             return input.value;
         }
         
@@ -167,58 +179,56 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
         return typeof input.value === "undefined" ? input : input.value;
     }
     
-    function executeListInContext (interpreter, list, context) {
+    function executePairInContext (interpreter, pair, context) {
         
-        var executedList, firstIsToken = false;
+        var newPair, firstIsToken = false;
         
-        if (list.length < 1) {
-            throw new Interpreter.TypeError("Unquoted empty list", 
-                list.lastLine || interpreter.lastLine, list.lastColumn || interpreter.lastColumn);
-        }
+        console.log("pair in executePairInContext:", pair);
         
-        if (!list[0]) {
+        if (!pair.head) {
             throw new Interpreter.TypeError("Head of list is not a function", 
                 list.lastLine || interpreter.lastLine, list.lastColumn || interpreter.lastColumn);
         }
         
-        firstIsToken = typeof list[0].type === "undefined" ? false : true;
+        firstIsToken = typeof pair.head.type === "undefined" ? false : true;
         
         if (firstIsToken) {
-            interpreter.lastLine = list[0].line;
-            interpreter.lastColumn = list[0].column;
+            interpreter.lastLine = pair.head.line;
+            interpreter.lastColumn = pair.head.column;
         }
         
-        if (firstIsToken && list[0].value in interpreter.forms) {
-            //console.log("Executing special form: ", list[0]);
-            return interpreter.forms[list[0].value](execute, list, context);
+        if (firstIsToken && pair.head.value in interpreter.forms) {
+            console.log("Executing special form: ", pair.tail);
+            return interpreter.forms[pair.head.value](execute, pair, context);
         }
         
-        if (firstIsToken && context.hasMacro(list[0].value)) {
-            //console.log("Executing special form: ", list[0]);
-            return context.findMacro(list[0].value)(context, list.slice(1));
+        if (firstIsToken && context.hasMacro(pair.head.value)) {
+            console.log("Executing macro: ", pair.tail);
+            return context.findMacro(pair.head.value)(context, pair.tail);
         }
         
-        if (firstIsToken && list[0].type && list[0].type !== Tokenizer.SYMBOL) {
-            throw new Interpreter.TypeError("Head " + list[0].value + " of list " +
-                "is not a function", list[0].line, list[0].column);
+        if (firstIsToken && pair.head.type && pair.head.type !== Tokenizer.SYMBOL) {
+            throw new Interpreter.TypeError("Head " + pair.head.value + " of list " +
+                "is not a function", pair.head.line, pair.head.column);
         }
-        else if (firstIsToken && list[0].type && !context.has(list[0].value)) {
-            throw new Interpreter.ReferenceError("Unbound symbol '" + list[0].value + "'", 
-                list[0].line, list[0].column);
+        else if (firstIsToken && pair.head.type && !context.has(pair.head.value)) {
+            console.log("context:", context);
+            throw new Interpreter.ReferenceError("Unbound symbol '" + pair.head.value + "'", 
+                pair.head.line, pair.head.column);
         }
         
+        newPair = new Pair();
         
-        executedList = list.map(function (item) {            
-            return executeInContext(interpreter, item, context);
-        });
+        newPair.head = executeInContext(interpreter, pair.head, context);
+        newPair.tail = executeInContext(interpreter, pair.tail, context);
         
-        if (typeof executedList[0] === "function") {
+        if (typeof pair.head === "function") {
             return (function () {
                 
                 var val;
                 
                 try {
-                    val = executedList[0].apply(undefined, executedList.slice(1));
+                    val = pair.head.apply(undefined, pair.tail);
                 }
                 catch (e) {
                     if (!e.scriptLine) {
@@ -234,15 +244,14 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer, libraryReques
             }());
         }
         
-        if (!executedList[0].type) {
-            throw new Interpreter.TypeError("Head " + (executedList[0].value || executedList[0]) + 
-                " of list is not a function", interpreter.lastLine, interpreter.lastColumn);
+        if (!pair.tail) {
+            return pair;
         }
         
-        return execute(executedList, context);
+        return execute(pair, context);
         
-        function execute (list, context) {
-            return executeInContext(interpreter, list, context);
+        function execute (pair, context) {
+            return executeInContext(interpreter, pair, context);
         }
     }
     

@@ -1,69 +1,69 @@
 /* global MO5 */
-MO5("MO5.script.Context", "MO5.script.Tokenizer").
-define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
+MO5("MO5.script.Context", "MO5.script.Tokenizer", "MO5.script.Pair").
+define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
 
     function SpecialFormsContainer () {}
     
-    SpecialFormsContainer.prototype.progn = function (execute, list, context) {
+    SpecialFormsContainer.prototype.progn = function (execute, pair, context) {
         
         var returnValue;
         
-        list.slice(1).forEach(function (item) {
+        pair.eachTail(function (item) {
             returnValue = execute(item, context);
         });
         
         return returnValue;
     };
     
-    SpecialFormsContainer.prototype["eval"] = function (execute, list, context) {
-        var listToEvaluate, error;
+    SpecialFormsContainer.prototype["eval"] = function (execute, pair, context) {
+        var pairToEvaluate, error;
         
-        if (list.length !== 2) {
+        if (pair.length !== 2) {
             throw new Error("Special form eval takes exactly one argument.");
         }
         
-        if (list[1] && list[1][0] && list[1][0].type === Tokenizer.SYMBOL && 
-                list[1][0].value === "quote") {
-            listToEvaluate = list[1][1];
+        if (pair.second() && pair.second().head && pair.second().head.type === Tokenizer.SYMBOL && 
+                pair.second().head.value === "quote") {
+            pairToEvaluate = pair.third();
         }
         else {
-            listToEvaluate = list[1];
+            pairToEvaluate = pair.second();
         }
         
-        //console.log("listToEvaluate:", listToEvaluate);
+        //console.log("pairToEvaluate:", pairToEvaluate);
         
-        if (listToEvaluate.type && listToEvaluate.type === Tokenizer.SYMBOL) {
-            if (!context.has(listToEvaluate.value)) {
-                error = new Error("Unbound symbol '" + listToEvaluate.value + "'");
-                error.scriptLine = listToEvaluate.line;
-                error.scriptColumn = listToEvaluate.column;
+        if (pairToEvaluate.type && pairToEvaluate.type === Tokenizer.SYMBOL) {
+            if (!context.has(pairToEvaluate.value)) {
+                error = new Error("Unbound symbol '" + pairToEvaluate.value + "'");
+                error.scriptLine = pairToEvaluate.line;
+                error.scriptColumn = pairToEvaluate.column;
                 error.fileName = "(eval'd code)";
                 throw error;
             }
             
-            listToEvaluate = context.find(listToEvaluate.value);
+            pairToEvaluate = context.find(pairToEvaluate.value);
         }
         
-        return execute(listToEvaluate, context);
+        return execute(pairToEvaluate, context);
     };
     
-    SpecialFormsContainer.prototype["dump-context"] = function (execute, list, context) {
+    SpecialFormsContainer.prototype["dump-context"] = function (execute, pair, context) {
         console.log(context);
     };
     
-    SpecialFormsContainer.prototype.macro = function (execute, list, context) {
+    SpecialFormsContainer.prototype.macro = function (execute, pair, context) {
         
         var name;
         
-        name = list[1][0].value;
+        name = pair.tail.head.head.value;
         
         function macro (ctx) {
             var scope = {}, args = [].slice.call(arguments, 1), ret, newContext;
             
-            //console.log("list in call to macro: ", list, "; context:", context);
+            //console.log("pair in call to macro: ", pair, "; context:", context);
             
-            list[1].slice(1).forEach(function (item, i) {
-                scope[item.value] = args[0][i];
+            pair.tail.head.eachTail(function (item, i) {
+                scope[item.head.value] = args[0][i];
             });
             
             scope.$arguments = args[0];
@@ -72,14 +72,14 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
             
             newContext = new Context(scope, ctx);
             
-            list.slice(2).forEach(function (item) {
+            pair.tail.tail.tail.eachTail(function (item) {
                 ret = execute(item, newContext);
             });
             
             return ret;
         }
         
-        macro.__argsCount__ = list[1].length || 0;
+        macro.__argsCount__ = pair.tail.length || 0;
         macro.isMacro = true;
         
         context.setMacro(name, macro);
@@ -87,28 +87,31 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
         return macro;
     };
     
-    SpecialFormsContainer.prototype["exists?"] = function (execute, list, context) {
-        return !!(list[1] && list[1].type && list[1].type === Tokenizer.SYMBOL && 
-            (context.has(list[1].value) || context.hasMacro(list[1].value)));
+    SpecialFormsContainer.prototype["exists?"] = function (execute, pair, context) {
+        return !!(pair.tail && pair.tail.type && pair.tail.type === Tokenizer.SYMBOL && 
+            (context.has(pair.tail.value) || context.hasMacro(pair.tail.value)));
     };
     
-    SpecialFormsContainer.prototype.define = function (execute, list, context) {
+    SpecialFormsContainer.prototype.define = function (execute, pair, context) {
         
-        var name, value, lambdaList;
+        var name, value, lambdaList, last;
         
-        if (Array.isArray(list[1])) {
-            name = list[1][0].value;
-            lambdaList = [{type: Tokenizer.SYMBOL, value: "lambda"}, list[1].slice(1)];
+        if (pair.tail.head.head) {
+            name = pair.tail.head.head.value;
+            lambdaList = new Pair({type: Tokenizer.SYMBOL, value: "lambda"}, pair.tail);
             
-            list.slice(2).forEach(function (item) {
-                lambdaList.push(item);
+            last = lambdaList;
+            
+            pair.tail.head.eachTail(function (item) {
+                last.tail = item;
+                last = item;
             });
             
             value = execute(lambdaList, context);
         }
         else {
-            name = list[1].value;
-            value = list[2].value ? list[2].value : execute(list[2], context);
+            name = pair.tail.head.value;
+            value = pair.tail.tail.value ? pair.tail.tail.value : execute(pair.tail.tail, context);
         }
         
         context.set(name, value);
@@ -116,12 +119,12 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
         return value;
     };
     
-    SpecialFormsContainer.prototype.set = function (execute, list, context) {
+    SpecialFormsContainer.prototype.set = function (execute, pair, context) {
         
         var name, value;
         
-        name = list[1].value;
-        value = list[2].value ? list[2].value : execute(list[2], context);
+        name = pair.tail.value;
+        value = pair.tail.tail.value ? pair.tail.tail.value : execute(pair.tail.tail, context);
         
         try {
             context.change(name, value);
@@ -133,53 +136,45 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
         return value;
     };
     
-    SpecialFormsContainer.prototype["if"] = function (execute, list, context) {
+    SpecialFormsContainer.prototype["if"] = function (execute, pair, context) {
         
-        //console.log("list[1] in if: ", list[1]);
+        //console.log("pair[1] in if: ", pair[1]);
         
-        if (execute(list[1], context)) {
-            return execute(list[2], context);
+        if (execute(pair.tail, context)) {
+            return execute(pair.tail.tail, context);
         }
         
-        return execute(list[3], context);
+        return execute(pair.tail.tail.tail, context);
     };
     
-    SpecialFormsContainer.prototype.quote = function (execute, list, context) {
-        
-        if (Array.isArray(list[1])) {
-            list[1].forEach(function (item, i) {
-                list[1][i] = item.type && isPrimitive(item.type) ? item.value : item;
-            });
-            return list[1];
-        }
-        
-        return list[1];
+    SpecialFormsContainer.prototype.quote = function (execute, pair, context) {
+        return pair.tail;
     };
     
     function isPrimitive (type) {
         return type === Tokenizer.NUMBER || type === Tokenizer.STRING || type === Tokenizer.BOOLEAN;
     }
     
-    SpecialFormsContainer.prototype["to-quote"] = function (execute, list, context) {
+    SpecialFormsContainer.prototype["to-quote"] = function (execute, pair, context) {
         
         var quote = {
             type: Tokenizer.SYMBOL,
             value: "quote",
-            line: list[0].line,
-            column: list[0].column
+            line: pair.head.line,
+            column: pair.head.column
         };
         
-        return [quote, list[1]];
+        return new Pair(quote, pair.tail);
     };
     
-    SpecialFormsContainer.prototype.lambda = function (execute, list, context) {
+    SpecialFormsContainer.prototype.lambda = function (execute, pair, context) {
         
         function lambda () {
             var scope = {}, args = arguments, ret, newContext;
             
-            //console.log("list in call to lambda: ", list, "; context:", context);
+            //console.log("pair in call to lambda: ", pair, "; context:", context);
             
-            list[1].forEach(function (item, i) {
+            pair.eachTail(function (item, i) {
                 scope[item.value] = args[i];
             });
             
@@ -187,14 +182,14 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
             
             newContext = new Context(scope, context);
             
-            list.slice(2).forEach(function (item) {
+            pair.tail.eachTail(function (item) {
                 ret = execute(item, newContext);
             });
             
             return ret;
         }
         
-        lambda.__argsCount__ = list[1].length || 0;
+        lambda.__argsCount__ = pair.tail.length || 0;
         
         return lambda;
         
