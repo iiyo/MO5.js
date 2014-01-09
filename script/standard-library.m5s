@@ -9,6 +9,13 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define cons pair)
+(define car head)
+(define cdr tail)
+(define rest tail)
+
+(define (list)
+    arguments)
 
 ; Evaluates a condition and if the condition is true,
 ; it evaluates all of the other arguments passed to
@@ -17,16 +24,18 @@
     (define $pgn (tail $arguments))
     (if (eval $a)
         (progn
-            (prepend! (to-quote progn) $pgn)
-            (eval $pgn))))
+            (define $pgnev (pair 'progn $pgn))
+            (print $pgnev)
+            (eval $pgnev))))
 
 
 (macro (unless $c)
     (define $pgn (tail $arguments))
     (if (not (eval $c))
         (progn
-            (prepend! (to-quote progn) $pgn)
-            (eval $pgn))))
+            (define $pgnev (pair 'progn $pgn))
+            (print $pgnev)
+            (eval $pgnev))))
   
 
 (define (object)
