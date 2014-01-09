@@ -8,7 +8,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
         
         var returnValue;
         
-        pair.eachTail(function (item) {
+        pair.tail.each(function (item) {
             returnValue = execute(item, context);
         });
         
@@ -16,22 +16,17 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
     };
     
     SpecialFormsContainer.prototype["eval"] = function (execute, pair, context) {
-        var pairToEvaluate, error;
+        var pairToEvaluate;
         
-        if (pair.length !== 2) {
+        if (pair.segments().length !== 2) {
             throw new Error("Special form eval takes exactly one argument.");
         }
         
-        if (pair.second() && pair.second().head && pair.second().head.type === Tokenizer.SYMBOL && 
-                pair.second().head.value === "quote") {
-            pairToEvaluate = pair.third();
-        }
-        else {
-            pairToEvaluate = pair.second();
-        }
+        pairToEvaluate = execute(pair.tail.head, context);
         
         //console.log("pairToEvaluate:", pairToEvaluate);
         
+        /*
         if (pairToEvaluate.type && pairToEvaluate.type === Tokenizer.SYMBOL) {
             if (!context.has(pairToEvaluate.value)) {
                 error = new Error("Unbound symbol '" + pairToEvaluate.value + "'");
@@ -42,7 +37,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
             }
             
             pairToEvaluate = context.find(pairToEvaluate.value);
-        }
+        }*/
         
         return execute(pairToEvaluate, context);
     };
@@ -62,17 +57,17 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
             
             //console.log("pair in call to macro: ", pair, "; context:", context);
             
-            pair.tail.head.eachTail(function (item, i) {
-                scope[item.head.value] = args[0][i];
+            pair.tail.head.tail.each(function (item, i) {
+                scope[item.value] = args[0].nth(i + 2);
             });
             
-            scope.$arguments = args[0];
+            scope.$arguments = args[0].tail;
             
             //console.log("scope in macro:", scope);
             
             newContext = new Context(scope, ctx);
             
-            pair.tail.tail.tail.eachTail(function (item) {
+            pair.tail.tail.each(function (item) {
                 ret = execute(item, newContext);
             });
             
@@ -81,6 +76,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
         
         macro.__argsCount__ = pair.tail.length || 0;
         macro.isMacro = true;
+        macro.__name__ = name;
         
         context.setMacro(name, macro);
         
@@ -102,16 +98,20 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
             
             last = lambdaList;
             
-            pair.tail.head.eachTail(function (item) {
-                last.tail = item;
-                last = item;
-            });
+            if (pair.tail.head.tail) {
+                pair.tail.head.tail.each(function (item) {
+                    last.tail = item;
+                    last = item;
+                });
+            }
             
             value = execute(lambdaList, context);
+            
+            value.__name__ = name;
         }
         else {
             name = pair.tail.head.value;
-            value = pair.tail.tail.value ? pair.tail.tail.value : execute(pair.tail.tail, context);
+            value = pair.tail.tail.value ? pair.tail.tail.value : execute(pair.tail.tail.head, context);
         }
         
         context.set(name, value);
@@ -140,15 +140,15 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
         
         //console.log("pair[1] in if: ", pair[1]);
         
-        if (execute(pair.tail, context)) {
-            return execute(pair.tail.tail, context);
+        if (execute(pair.tail.head, context)) {
+            return execute(pair.tail.tail.head, context);
         }
         
         return execute(pair.tail.tail.tail, context);
     };
     
     SpecialFormsContainer.prototype.quote = function (execute, pair, context) {
-        return pair.tail;
+        return pair.tail.head;
     };
     
     function isPrimitive (type) {
@@ -172,24 +172,30 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
         function lambda () {
             var scope = {}, args = arguments, ret, newContext;
             
-            //console.log("pair in call to lambda: ", pair, "; context:", context);
+            console.log("pair in call to lambda: ", pair, "; context:", context);
             
-            pair.eachTail(function (item, i) {
-                scope[item.value] = args[i];
-            });
+            if (isObject(pair.tail) && isObject(pair.tail.head) && pair.tail.head.isPair) {
+                pair.tail.head.each(function (item, i) {
+                    scope[item.value] = args[i];
+                });
+            }
             
-            scope.arguments = [].slice.call(args);
+            scope.arguments = Pair.fromArray([].slice.call(arguments));
+            console.log("scope.arguments in call to lambda:", scope.arguments);
             
             newContext = new Context(scope, context);
             
-            pair.tail.eachTail(function (item) {
-                ret = execute(item, newContext);
-            });
+            if (isObject(pair.tail) && isObject(pair.tail.tail) && pair.tail.tail.isPair) {
+                pair.tail.tail.each(function (item) {
+                    ret = execute(item, newContext);
+                });
+            }
             
             return ret;
         }
         
         lambda.__argsCount__ = pair.tail.length || 0;
+        lambda.__ast__ = pair;
         
         return lambda;
         
@@ -198,5 +204,9 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
     SpecialFormsContainer.prototype.lambda.__description__ = "Defines an anonymous procedure.";
     
     return SpecialFormsContainer;
+    
+    function isObject (thing) {
+        return (typeof thing === "object" && thing !== null);
+    }
     
 });

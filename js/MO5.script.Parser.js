@@ -20,38 +20,97 @@ define("MO5.script.Parser", function (Exception, Tokenizer, Pair) {
         
         this.currentFileName = fileName;
         counter = {opParens: 0, clParens: 0};
-        tokens = this.tokenizer.tokenize(input, fileName);
+        tokens = expandQuotes(this.tokenizer.tokenize(input, fileName));
         ast = tokensToList(tokens, counter);
-        
-        console.log(ast);
         
         if (counter.opParens !== counter.clParens) {
             lastItem = counter.lastToken;
             throw new Tokenizer.ParseError("Unexpected end of input", lastItem.line, lastItem.column);
         }
         
-        expandQuotes(ast);
-        
         return ast;
     };
     
-    function expandQuotes (ast) {
+    function expandQuotes (tokens) {
         
-        var leaf, i;
+        var i, len, token, newTokens = [], nextToken, parenLevel = 0;
         
-        for (i = 0; i < ast.length; i += 1) {
+        for (i = 0, len = tokens.length; i < len; i += 1) {
+            token = tokens[i];
             
-            leaf = ast[i];
-            
-            if (Array.isArray(leaf)) {
-                expandQuotes(leaf);
+            if (token.type !== Tokenizer.QUOTE) {
+                newTokens.push(token);
                 continue;
             }
             
-            if (leaf.type === Tokenizer.QUOTE) {
-                ast[i] = toQuote(ast, i);
+            nextToken = tokens[i + 1];
+            
+            if (!nextToken) {
+                throw new Tokenizer.ParseError("Unexpected end of input", token.line, token.column);
             }
+            
+            newTokens.push({
+                type: Tokenizer.OPENING_PAREN,
+                value: "(",
+                line: token.line,
+                column: token.column,
+                length: 0
+            });
+            
+            newTokens.push({
+                type: Tokenizer.SYMBOL,
+                value: "quote",
+                line: token.line,
+                column: token.column,
+                length: 1
+            });
+            
+            if (nextToken.type === Tokenizer.SYMBOL) {
+                
+                newTokens.push(nextToken);
+                
+                i += 1;
+            }
+            else if (nextToken.type === Tokenizer.OPENING_PAREN) {
+                while (true) {
+                    i += 1;
+                    token = tokens[i];
+                    
+                    if (!token) {
+                        throw new Tokenizer.ParseError("Unexpected end of input");
+                    }
+                    
+                    newTokens.push(token);
+                    
+                    if (token.type === Tokenizer.OPENING_PAREN) {
+                        parenLevel += 1;
+                    }
+                    
+                    if (token.type === Tokenizer.CLOSING_PAREN) {
+                        parenLevel -= 1;
+                        
+                        if (parenLevel === 0) {
+                            break;
+                        }
+                    }
+                    
+                }
+            }
+            else {
+                throw new Tokenizer.ParseError(
+                    "Unexpected non-quotable token after quote", token.line, token.column);
+            }
+            
+            newTokens.push({
+                type: Tokenizer.CLOSING_PAREN,
+                value: ")",
+                line: token.line,
+                column: token.column,
+                length: 0
+            });
         }
+        
+        return newTokens;
     }
     
     function toQuote (ast, i) {
