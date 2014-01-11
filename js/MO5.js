@@ -384,6 +384,7 @@ var MO5 = (function () {
         "MO5.Animation": MO5.path + "MO5.Animation.js",
         "MO5.dom.effects.typewriter": MO5.path + "MO5.dom.effects.typewriter.js",
         "MO5.dom.Element": MO5.path + "MO5.dom.Element.js",
+        "MO5.dom.escape": MO5.path + "MO5.dom.escape.js",
         "MO5.canvas.Canvas": MO5.path + "MO5.canvas.Canvas.js",
         "MO5.canvas.Group": MO5.path + "MO5.canvas.Group.js",
         "MO5.canvas.Layer": MO5.path + "MO5.canvas.Layer.js",
@@ -400,6 +401,7 @@ var MO5 = (function () {
         "MO5.script.Interpreter": MO5.path + "MO5.script.Interpreter.js",
         "MO5.script.Pair": MO5.path + "MO5.script.Pair.js",
         "MO5.script.Printer": MO5.path + "MO5.script.Printer.js",
+        "MO5.script.errors": MO5.path + "MO5.script.errors.js",
         "MO5.types": MO5.path + "MO5.types.js"
     };
     

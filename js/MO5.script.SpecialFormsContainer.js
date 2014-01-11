@@ -1,6 +1,6 @@
 /* global MO5 */
-MO5("MO5.script.Context", "MO5.script.Tokenizer", "MO5.script.Pair").
-define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
+MO5("MO5.script.errors", "MO5.script.Context", "MO5.script.Tokenizer", "MO5.script.Pair").
+define("MO5.script.SpecialFormsContainer", function (errors, Context, Tokenizer, Pair) {
 
     function SpecialFormsContainer () {}
     
@@ -19,25 +19,11 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
         var pairToEvaluate;
         
         if (pair.segments().length !== 2) {
-            throw new Error("Special form eval takes exactly one argument.");
+            throw new errors.ScriptError("Special form eval takes exactly one argument.", 
+                pair.head.line, pair.head.column);
         }
         
         pairToEvaluate = execute(pair.tail.head, context);
-        
-        //console.log("pairToEvaluate:", pairToEvaluate);
-        
-        /*
-        if (pairToEvaluate.type && pairToEvaluate.type === Tokenizer.SYMBOL) {
-            if (!context.has(pairToEvaluate.value)) {
-                error = new Error("Unbound symbol '" + pairToEvaluate.value + "'");
-                error.scriptLine = pairToEvaluate.line;
-                error.scriptColumn = pairToEvaluate.column;
-                error.fileName = "(eval'd code)";
-                throw error;
-            }
-            
-            pairToEvaluate = context.find(pairToEvaluate.value);
-        }*/
         
         return execute(pairToEvaluate, context);
     };
@@ -90,11 +76,17 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
     
     SpecialFormsContainer.prototype.define = function (execute, pair, context) {
         
-        var name, value, lambdaList, last;
+        var name, value, lambdaList, last, description;
         
         if (pair.tail.head.head) {
             name = pair.tail.head.head.value;
             lambdaList = new Pair({type: Tokenizer.SYMBOL, value: "lambda"}, pair.tail);
+            
+            if (pair.tail.tail.head && isObject(pair.tail.tail.head) && 
+                    pair.tail.tail.head.type && pair.tail.tail.head.type === Tokenizer.STRING) {
+                description = pair.tail.tail.head.value;
+                pair.tail.tail = pair.tail.tail.tail;
+            }
             
             last = lambdaList;
             
@@ -108,6 +100,7 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
             value = execute(lambdaList, context);
             
             value.__name__ = name;
+            value.__description__ = description;
         }
         else {
             name = pair.tail.head.value;
@@ -119,18 +112,19 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
         return value;
     };
     
-    SpecialFormsContainer.prototype.set = function (execute, pair, context) {
+    SpecialFormsContainer.prototype["set!"] = function (execute, pair, context) {
         
         var name, value;
         
-        name = pair.tail.value;
-        value = pair.tail.tail.value ? pair.tail.tail.value : execute(pair.tail.tail, context);
+        name = pair.second().value;
+        value =  execute(pair.third(), context);
         
         try {
             context.change(name, value);
         }
         catch (e) {
-            throw new Error("Cannot set value on undefined symbol '" + name + "'");
+            throw new errors.ReferenceError("Cannot set value on undefined symbol '" + name + "'",
+                pair.head.line, pair.head.column, pair.head.file);
         }
         
         return value;
@@ -138,24 +132,18 @@ define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer, Pair) {
     
     SpecialFormsContainer.prototype["if"] = function (execute, pair, context) {
         
-        //console.log("pair[1] in if: ", pair[1]);
-        
-        if (execute(pair.tail.head, context)) {
-            return execute(pair.tail.tail.head, context);
+        if (execute(pair.second(), context)) {
+            return execute(pair.third(), context);
         }
         
-        return execute(pair.tail.tail.tail, context);
+        return execute(pair.fourth(), context);
     };
     
-    SpecialFormsContainer.prototype.quote = function (execute, pair, context) {
+    SpecialFormsContainer.prototype.quote = function (execute, pair) {
         return pair.tail.head;
     };
     
-    function isPrimitive (type) {
-        return type === Tokenizer.NUMBER || type === Tokenizer.STRING || type === Tokenizer.BOOLEAN;
-    }
-    
-    SpecialFormsContainer.prototype["to-quote"] = function (execute, pair, context) {
+    SpecialFormsContainer.prototype["to-quote"] = function (execute, pair) {
         
         var quote = {
             type: Tokenizer.SYMBOL,

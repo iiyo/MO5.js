@@ -4,7 +4,7 @@ define("MO5.script.Printer", function (types, Tokenizer) {
 
     function Printer () {}
     
-    Printer.prototype.print = function (value) {
+    Printer.prototype.stringify = function (value) {
         
         var text = "";
         
@@ -88,6 +88,10 @@ define("MO5.script.Printer", function (types, Tokenizer) {
         makeString(value, 0, true);
         
         return text;
+    };
+    
+    Printer.prototype.print = function (value) {
+        console.log(this.stringify(value));
     };
     
     return Printer;
