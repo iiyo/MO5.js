@@ -74,8 +74,13 @@ define("MO5.script.Printer", function (types, Tokenizer) {
                 text += '"' + val + '"';
             }
             else if (typeof val === "function") {
-                text += "#<" + (val.__name__ ? (val.isMacro ? val.name : "procedure") + 
-                    ":" + val.__name__ : "procedure:" + (val.name ? val.name : "?")) +">";
+                if (val.__ast__) {
+                    makeString(val.__ast__);
+                }
+                else {
+                    text += "#<" + (val.__name__ ? (val.isMacro ? val.name : "procedure") + 
+                        ":" + val.__name__ : "procedure:" + (val.name ? val.name : "?")) +">";
+                }
             }
             else if (val === undefined) {
                 text += "nil";

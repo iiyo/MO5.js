@@ -27,6 +27,7 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
         this.context = new Context(new GlobalScope());
         this.lastLine = 0;
         this.lastColumn = 0;
+        this.recursionLevel = 0;
     };
     
     ///////////////////////////////////////////
@@ -102,44 +103,60 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
      */
     function evaluate (input, context, interpreter) {
         
-        var head, value;
-        
-        if (isLiteral(input)) {
-            return getLiteralValue(input);
+        var head;
+    
+        while (true) {
+            
+            if (typeof input === "function") {
+                return input;
+            }
+            
+            if (isLiteral(input)) {
+                return getLiteralValue(input);
+            }
+            
+            if (isSymbol(input)) {
+                interpreter.lastLine = input.line;
+                interpreter.lastColumn = input.column;
+                return resolveSymbol(input, context, interpreter);
+            }
+            
+            head = evaluate(input.head, context, interpreter);
+            
+            if (typeof head !== "function") {
+                throw new errors.TypeError("Head " + printer.stringify(head) +
+                    " of list is not a procedure", input.head.head.line || interpreter.lastLine,
+                    input.head.head.column || interpreter.lastColumn,
+                    input.head.head.file || interpreter.lastFileName);
+            }
+            
+            if (isSpecialForm(input.head, interpreter)) {
+                if (head.__useTco__) {
+                    input = head(execute, input, context);
+                }
+                else {
+                    return head(execute, input, context);
+                }
+            }
+            else if (isMacro(input.head, context)) {
+                input = head(context, input);
+            }
+            else {
+                try {
+                    input = head.apply(undefined, evaluateList(input.tail, context, interpreter));
+                    
+                    if (typeof input !== "function") {
+                        return input;
+                    }
+                }
+                catch (e) {
+                    throw new errors.ScriptError(e.message, interpreter.lastLine, 
+                        interpreter.lastColumn, interpreter.lastFileName);
+                }
+            }
         }
         
-        if (isSymbol(input)) {
-            interpreter.lastLine = input.line;
-            interpreter.lastColumn = input.column;
-            return resolveSymbol(input, context, interpreter);
-        }
-        
-        head = evaluate(input.head, context, interpreter);
-        
-        if (typeof head !== "function") {
-            throw new errors.TypeError("Head " + printer.stringify(head) +
-                " of list is not a procedure", input.head.head.line || interpreter.lastLine,
-                input.head.head.column || interpreter.lastColumn,
-                input.head.head.file || interpreter.lastFileName);
-        }
-        
-        if (isSpecialForm(input.head, interpreter)) {
-            return head(execute, input, context);
-        }
-        
-        if (isMacro(input.head, context)) {
-            return head(context, input);
-        }
-        
-        try {
-            value = head.apply(undefined, evaluateList(input.tail, context, interpreter));
-        }
-        catch (e) {
-            throw new errors.ScriptError(e.message, interpreter.lastLine, 
-                interpreter.lastColumn, interpreter.lastFileName);
-        }
-        
-        return value;
+        //return value;
         
         function execute (pair, ctx) {
             return evaluate(pair, ctx, interpreter);
@@ -178,12 +195,13 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
         var type = typeof thing;
         var isNumber = type === "number";
         var isString = type === "string";
+        var isBoolean = type === "boolean";
         
         if (!thing) {
             return true;
         }
         
-        if (isNumber || isString) {
+        if (isNumber || isString || isBoolean) {
             return true;
         }
         
@@ -247,5 +265,14 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
     
     function makeBreakpointPath (file, line) {
         return "file>>>" + file + ">>>line>>>" + line;
+    }
+    
+    function trampoline (fn) {
+        
+        while (fn && typeof fn === "function") {
+            fn = fn();
+        }
+        
+        return fn;
     }
 });
