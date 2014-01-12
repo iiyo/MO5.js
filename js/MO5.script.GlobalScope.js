@@ -18,7 +18,7 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
     };
     
     GlobalScope.prototype.apply = function (fun, args) {
-        return fun.apply(undefined, args);
+        return fun.apply(undefined, args.toArray());
     };
     
     GlobalScope.prototype.call = function (fun) {
@@ -339,10 +339,10 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
     /**
      * Defers the execution of a function for $duration milliseconds.
      */
-    GlobalScope.prototype.defer = function (fun, duration) {
+    GlobalScope.prototype.defer = function (duration, fun) {
         
         assert(typeof fun === "function", 
-            "Procedure defer expects a procedure as its first argument");
+            "Procedure defer expects a procedure as its second argument");
         
         return setTimeout(fun, duration);
     };
@@ -394,9 +394,19 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         return +a;
     };
     
-    GlobalScope.prototype.string = function (a) {
-        return "" + a;
+    GlobalScope.prototype.string = function () {
+        
+        var out = "";
+        
+        [].forEach.call(arguments, function (part) {
+            out += "" + part;
+        });
+        
+        return out;
     };
+    
+    GlobalScope.prototype.string.__description__ = 
+        "Builds one string from one or more arguments, converting any non-string values.";
     
     GlobalScope.prototype.round = function (a) {
         assert(typeof a === "number", "Procedure round expects its parameter to be a number");
@@ -407,15 +417,15 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         
         var returnValue;
         
-        if (!Array.isArray(arr)) {
-            throw new Error("Procedure each expects parameter 1 to be of type list");
+        if (!Pair.isPair(arr)) {
+            throw new Error("Procedure each expects parameter 1 to be a list");
         }
         
         if (typeof fun !== "function") {
-            throw new Error("Procedure each expects parameter 2 to be of type function");
+            throw new Error("Procedure each expects parameter 2 to be of a procedure");
         }
         
-        arr.forEach(function (item, i) {
+        arr.each(function (item, i) {
             returnValue = fun(typeof item.value === "undefined" ? item : item.value, i);
         });
         

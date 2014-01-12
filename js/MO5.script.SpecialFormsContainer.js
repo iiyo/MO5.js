@@ -76,25 +76,18 @@ define("MO5.script.SpecialFormsContainer", function (errors, Context, Tokenizer,
     
     SpecialFormsContainer.prototype.define = function (execute, pair, context) {
         
-        var name, value, lambdaList, last, description;
+        var name, value, lambdaList, description;
         
         if (pair.tail.head.head) {
             name = pair.tail.head.head.value;
-            lambdaList = new Pair({type: Tokenizer.SYMBOL, value: "lambda"}, pair.tail);
+            lambdaList = new Pair({type: Tokenizer.SYMBOL, value: "lambda"});
+            
+            lambdaList.tail = new Pair(pair.second().tail, pair.tail.tail);
             
             if (pair.tail.tail.head && isObject(pair.tail.tail.head) && 
                     pair.tail.tail.head.type && pair.tail.tail.head.type === Tokenizer.STRING) {
                 description = pair.tail.tail.head.value;
                 pair.tail.tail = pair.tail.tail.tail;
-            }
-            
-            last = lambdaList;
-            
-            if (pair.tail.head.tail) {
-                pair.tail.head.tail.each(function (item) {
-                    last.tail = item;
-                    last = item;
-                });
             }
             
             value = execute(lambdaList, context);
@@ -139,9 +132,18 @@ define("MO5.script.SpecialFormsContainer", function (errors, Context, Tokenizer,
         return execute(pair.fourth(), context);
     };
     
+    SpecialFormsContainer.prototype["if"].__description__ = 
+        "Evaluates the first argument " +
+        " ('condition') and checks whether the result is true. \n" +
+        "If it the result true it evaluates the second argument ('then').\n" +
+        "If it the result is false it evaluates the third argument (else) instead.\n\n" +
+        "Form: (if [condition] [then] [else])";
+    
     SpecialFormsContainer.prototype.quote = function (execute, pair) {
         return pair.tail.head;
     };
+    
+    SpecialFormsContainer.prototype.quote.__description__ = "Returns an expression unevaluated.";
     
     SpecialFormsContainer.prototype["to-quote"] = function (execute, pair) {
         

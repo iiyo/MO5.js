@@ -135,7 +135,7 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
             value = head.apply(undefined, evaluateList(input.tail, context, interpreter));
         }
         catch (e) {
-            throw new Interpreter.ScriptError(e.message, interpreter.lastLine, 
+            throw new errors.ScriptError(e.message, interpreter.lastLine, 
                 interpreter.lastColumn, interpreter.lastFileName);
         }
         

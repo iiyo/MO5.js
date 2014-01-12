@@ -216,7 +216,8 @@ MO5().define("MO5.script.Tokenizer", function () {
                 column: realColumn,
                 value: value,
                 length: realLength,
-                file: fileName
+                file: fileName,
+                toString: function () { return value; }
             };
         }
         

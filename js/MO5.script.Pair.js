@@ -1,5 +1,7 @@
 /* global MO5 */
-MO5().define("MO5.script.Pair", function () {
+MO5("MO5.script.Printer").define("MO5.script.Pair", function (Printer) {
+    
+    var printer = new Printer();
 
     function Pair (head, tail) {
         this.head = head === undefined ? null: head;
@@ -78,8 +80,16 @@ MO5().define("MO5.script.Pair", function () {
         return false;
     };
     
+    Pair.prototype.toString = function () {
+        return printer.stringify(this);
+    };
+    
     Pair.prototype.segments = function () {
         return Pair.segments(this);
+    };
+    
+    Pair.prototype.toArray = function () {
+        return Pair.toArray(this);
     };
     
     Pair.prototype.each = function (fn) {
