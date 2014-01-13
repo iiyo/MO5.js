@@ -12,8 +12,6 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         pair.head = head;
         pair.tail = tail;
         
-        console.log(JSON.stringify(pair));
-        
         return pair;
     };
     
@@ -102,6 +100,10 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         
         return result;
         
+    };
+    
+    GlobalScope.prototype["%"] = function (x, y) {
+        return x % y;
     };
     
     GlobalScope.prototype["="] = function (a, b) {
