@@ -27,7 +27,6 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
         this.context = new Context(new GlobalScope());
         this.lastLine = 0;
         this.lastColumn = 0;
-        this.recursionLevel = 0;
     };
     
     ///////////////////////////////////////////
@@ -74,25 +73,20 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
     
     Interpreter.prototype.execute = function (input, fileName, context) {
         
-        var ast, value, self = this;
+        var ast, results;
         
         fileName = fileName || "(unknown file)";
         context = context || this.context;
-        
         this.lastFileName = fileName;
         
         ast = this.parser.parse(input, fileName);
+        results = evaluateList(ast, context, this);
         
-        if (ast.tail) {
-            ast.each(function (item) {
-                value = evaluate(item, context, self);
-            });
-        }
-        else {
-            value = evaluate(ast.head, context, this);
+        if (results.length > 0) {
+            return results[results.length - 1];
         }
         
-        return value;
+        return null;
     };
     
     /**
@@ -103,13 +97,9 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
      */
     function evaluate (input, context, interpreter) {
         
-        var head;
+        var head, expressions;
     
         while (true) {
-            
-            if (typeof input === "function") {
-                return input;
-            }
             
             if (isLiteral(input)) {
                 return getLiteralValue(input);
@@ -118,45 +108,49 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
             if (isSymbol(input)) {
                 interpreter.lastLine = input.line;
                 interpreter.lastColumn = input.column;
+                
                 return resolveSymbol(input, context, interpreter);
             }
-            
-            head = evaluate(input.head, context, interpreter);
-            
-            if (typeof head !== "function") {
-                throw new errors.TypeError("Head " + printer.stringify(head) +
-                    " of list is not a procedure", input.head.head.line || interpreter.lastLine,
-                    input.head.head.column || interpreter.lastColumn,
-                    input.head.head.file || interpreter.lastFileName);
+                
+            if (isLambdaDeclaration(input)) {
+                return new Lambda(input.second(), input.tail.tail, context);
             }
             
             if (isSpecialForm(input.head, interpreter)) {
-                if (head.__useTco__) {
-                    input = head(execute, input, context);
-                }
-                else {
+                
+                head = evaluate(input.head, context, interpreter);
+                
+                if (!head.__useTco__) {
                     return head(execute, input, context);
                 }
+                
+                input = head(execute, input, context);
             }
             else if (isMacro(input.head, context)) {
+                head = evaluate(input.head, context, interpreter);
                 input = head(context, input);
             }
             else {
-                try {
-                    input = head.apply(undefined, evaluateList(input.tail, context, interpreter));
-                    
-                    if (typeof input !== "function") {
-                        return input;
-                    }
+                expressions = evaluateList(input, context, interpreter);
+                head = expressions[0];
+                
+                if (head instanceof Lambda) {
+                    context = new Context(createScope(head.params, expressions.slice(1)), context);
+                    input = head.expressions;
                 }
-                catch (e) {
-                    throw new errors.ScriptError(e.message, interpreter.lastLine, 
-                        interpreter.lastColumn, interpreter.lastFileName);
+                else if (typeof head === "function") {
+                    return head.apply(null, expressions.slice(1));
+                }
+                else {
+                    if (expressions.length > 0) {
+                        return expressions[expressions.length - 1];
+                    }
+                    else {
+                        return null;
+                    }
                 }
             }
         }
-        
-        //return value;
         
         function execute (pair, ctx) {
             return evaluate(pair, ctx, interpreter);
@@ -230,6 +224,14 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
         return false;
     }
     
+    function isLambdaDeclaration (input) {
+        return (
+            types.isObject(input.head) &&
+            input.head.type === Tokenizer.SYMBOL &&
+            input.head.value === "lambda"
+        );
+    }
+    
     function isSpecialForm (input, interpreter) {
         return isSymbol(input) && (input.value in interpreter.forms);
     }
@@ -267,12 +269,34 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
         return "file>>>" + file + ">>>line>>>" + line;
     }
     
-    function trampoline (fn) {
+    function Lambda (params, expressions, context) {
+        this.params = params;
+        this.expressions = expressions;
+        this.context = context;
+    }
+    
+    function createScope (expression, args) {
         
-        while (fn && typeof fn === "function") {
-            fn = fn();
+        var params, scope = {};
+        
+        if (!expression) {
+            params = [];
+        }
+        else {
+            params = expression.toArray();
         }
         
-        return fn;
+        if (params.length > args.length) {
+            throw new errors.ScriptError("Not enough arguments in call to procedure",
+                expression.line, expression.column, expression.file);
+        }
+        
+        params.forEach(function (param, i) {
+            scope[param.value] = args[i];
+        });
+        
+        scope.arguments = args;
+        
+        return scope;
     }
 });
