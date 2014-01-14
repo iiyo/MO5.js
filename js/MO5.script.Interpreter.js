@@ -1,10 +1,10 @@
-/* global MO5 */
+/* global MO5, setTimeout */
 MO5("MO5.types", "MO5.script.errors", "MO5.script.Tokenizer", "MO5.script.Parser", 
     "MO5.script.Context", "MO5.script.GlobalScope", "MO5.script.SpecialFormsContainer", 
-    "MO5.script.Pair", "MO5.script.Printer", 
+    "MO5.script.Pair", "MO5.script.Printer", "MO5.Result", 
     "ajax:" + MO5.path + "../script/standard-library.m5s").
 define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Context, GlobalScope, 
-       FormsContainer, Pair, Printer, libraryRequest) {
+       FormsContainer, Pair, Printer, Result, libraryRequest) {
     
     var libraryText = libraryRequest.responseText, printer = new Printer();
     
@@ -73,20 +73,31 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
     
     Interpreter.prototype.execute = function (input, fileName, context) {
         
-        var ast, results;
+        var ast, result = new Result(), self = this;
         
         fileName = fileName || "(unknown file)";
         context = context || this.context;
         this.lastFileName = fileName;
         
         ast = this.parser.parse(input, fileName);
-        results = evaluateList(ast, context, this);
         
-        if (results.length > 0) {
-            return results[results.length - 1];
-        }
+        setTimeout(function () {
+            trampoline(
+                evaluateList(ast, context, self, 
+                    function (res) { return res; },
+                    function (e) { result.failure(e); }),
+                function (res) {
+                    if (res.length > 0) {
+                        result.success(res[res.length - 1]);
+                    }
+                    else {
+                        result.success(res);
+                    }
+                }
+            );
+        }, 0);
         
-        return null;
+        return result.promise;
     };
     
     /**
@@ -95,83 +106,120 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
      * and and a Context instance to lookup the variables and macros in
      * the current scope.
      */
-    function evaluate (input, context, interpreter) {
-        
-        var head, expressions;
+    function evaluate (input, context, interpreter, cc, error) {
     
-        while (true) {
+        function _evaluate () {
             
             if (isLiteral(input)) {
-                return getLiteralValue(input);
+                return function _literalReturn () { return cc(getLiteralValue(input)); };
             }
             
             if (isSymbol(input)) {
                 interpreter.lastLine = input.line;
                 interpreter.lastColumn = input.column;
                 
-                return resolveSymbol(input, context, interpreter);
+                return function _symbolResolver () {
+                    return cc(resolveSymbol(input, context, interpreter));
+                };
             }
                 
             if (isLambdaDeclaration(input)) {
-                return new Lambda(input.second(), input.tail.tail, context);
+                return function _lambdaCreator () {
+                    return cc(new Lambda(input.second(), input.tail.tail, context));
+                };
             }
             
             if (isSpecialForm(input.head, interpreter)) {
-                
-                head = evaluate(input.head, context, interpreter);
-                
-                if (!head.__useTco__) {
-                    return head(execute, input, context);
-                }
-                
-                input = head(execute, input, context);
+                return function _formResolver () {
+                    return evaluate(input.head, context, interpreter, function _formCall (form) {
+                        return form(execute, input, context, function _formResult (res) {
+                            input = res;
+                            return _evaluate;
+                        }, error);
+                    }, error);
+                };
             }
             else if (isMacro(input.head, context)) {
-                head = evaluate(input.head, context, interpreter);
-                input = head(context, input);
+                return function _macroFetcher () {
+                    return evaluate(input.head, context, interpreter, function _macroCall (macro) {
+                        return macro(context, input, function _macroResult (res) {
+                            input = res;
+                            return _evaluate;
+                        }, error);
+                    }, error);
+                };
             }
             else {
-                expressions = evaluateList(input, context, interpreter);
-                head = expressions[0];
-                
-                if (head instanceof Lambda) {
-                    context = new Context(createScope(head.params, expressions.slice(1)), context);
-                    input = head.expressions;
-                }
-                else if (typeof head === "function") {
-                    return head.apply(null, expressions.slice(1));
-                }
-                else {
-                    if (expressions.length > 0) {
-                        return expressions[expressions.length - 1];
-                    }
-                    else {
-                        return null;
-                    }
-                }
+                return function _functionEvaluation () {
+                    return evaluateList(input, context, interpreter, 
+                        function _listHandler (expressions) {
+                            
+                            var head = expressions[0];
+                            
+                            if (head instanceof Lambda) {
+                                context = new Context(
+                                    createScope(head.params, expressions.slice(1)), context);
+                                input = head.expressions;
+                                return _evaluate;
+                            }
+                            else if (typeof head === "function") {
+                                return function _functionCall () {
+                                    return cc(head.apply(null, expressions.slice(1)));
+                                };
+                            }
+                            else {
+                                if (expressions.length > 0) {
+                                    return function _lastExpressionReturn () {
+                                        return cc(expressions[expressions.length - 1]);
+                                    };
+                                }
+                                else {
+                                    return function _nullReturn () { return cc(null); };
+                                }
+                            }
+                        
+                        }, error
+                    );
+                };
+            }
+            
+            function execute (pair, ctx, cc2) {
+                return evaluate(pair, ctx, interpreter, function (res) {
+                    return cc2(res);
+                }, error);
             }
         }
         
-        function execute (pair, ctx) {
-            return evaluate(pair, ctx, interpreter);
-        }
+        return _evaluate;
     }
     
     /**
      * Evaluates the arguments to a function and returns the results
      * in an array that can be applied to the head of a list.
      */
-    function evaluateList (input, context, interpreter) {
+    function evaluateList (input, context, interpreter, cc, error) {
         
         var map = [], current = input, i = 0;
         
-        while (current) {
-            map[i] = evaluate(current.head, context, interpreter);
-            i += 1;
-            current = current.tail;
+        if (current) {
+            return loopFn;
         }
         
-        return map;
+        return function () { return cc(map); };
+        
+        function loopFn () {
+            return evaluate(current.head, context, interpreter, function (res) {
+                map[i] = res;
+                i += 1;
+                current = current.tail;
+                
+                if (current) {
+                    return loopFn;
+                }
+                
+                return function () { return cc(map); };
+            }, error);
+        }
     }
     
     return Interpreter;
@@ -298,5 +346,16 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
         scope.arguments = args;
         
         return scope;
+    }
+    
+    function trampoline (fn, cc) {
+        
+        var result = fn();
+        
+        while (typeof result === "function") {
+            result = result();
+        }
+        
+        return cc(result);
     }
 });
