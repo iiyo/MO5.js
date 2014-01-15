@@ -157,10 +157,13 @@ define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Con
                             var head = expressions[0];
                             
                             if (head instanceof Lambda) {
-                                context = new Context(
-                                    createScope(head.params, expressions.slice(1)), context);
-                                input = head.expressions;
-                                return _evaluate;
+                                return function _lambdaApplicator () {
+                                    var ctx = new Context(
+                                        createScope(head.params, expressions.slice(1)), 
+                                            head.context);
+                                    return evaluate(head.expressions, ctx, interpreter,
+                                        cc, error);
+                                };
                             }
                             else if (typeof head === "function") {
                                 return function _functionCall () {
