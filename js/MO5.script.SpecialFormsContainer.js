@@ -20,13 +20,14 @@ define("MO5.script.SpecialFormsContainer", function (errors, Context, Tokenizer,
         }
         
         function next () {
-            return execute(heads.unshift(), context, function (res) {
+            return execute(heads.shift(), context, function (res) {
                 returnValue = res;
                 
                 if (i === len - 1) {
                     return function () { return cc(returnValue); };
                 }
                 else {
+                    i += 1;
                     return next;
                 }
             });
