@@ -32,7 +32,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global window, require, process, document */
+/* global window, require, process, document, console */
 
 if (typeof window !== "undefined") {
     // If the browser doesn't support requestAnimationFrame, use a fallback.
