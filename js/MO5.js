@@ -365,6 +365,7 @@ var MO5 = (function () {
     
     MO5.modules = {
         "MO5.ajax": MO5.path + "MO5.ajax.js",
+        "MO5.assert": MO5.path + "MO5.assert.js",
         "MO5.Exception": MO5.path + "MO5.Exception.js",
         "MO5.fail": MO5.path + "MO5.fail.js",
         "MO5.EventBus": MO5.path + "MO5.EventBus.js",
