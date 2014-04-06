@@ -1,22 +1,11 @@
 /* global MO5 */
-MO5("MO5.Map", "MO5.script.Tokenizer", "MO5.script.Pair", "MO5.script.Printer").
-define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
-    
-    var printer = new Printer();
+MO5("MO5.Map", "MO5.script.Tokenizer").
+define("MO5.script.GlobalScope", function (Map, Tokenizer) {
 
     function GlobalScope () {}
     
-    GlobalScope.prototype.pair = function (head, tail) {
-        var pair = new Pair();
-        
-        pair.head = head;
-        pair.tail = tail;
-        
-        return pair;
-    };
-    
     GlobalScope.prototype.apply = function (fun, args) {
-        return fun.apply(undefined, args.toArray());
+        return fun.apply(undefined, args);
     };
     
     GlobalScope.prototype.call = function (fun) {
@@ -24,18 +13,18 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
     };
     
     GlobalScope.prototype.print = function (value) {
-        console.log(printer.print(value));
+        console.log(value);
         return value;
     };
     
     GlobalScope.prototype.head = function (list) {
-        assert(list instanceof Pair, "Procedure head expects its argument to be a list");
-        return list.head;
+        assert(Array.isArray(list), "Procedure head expects its argument to be a list");
+        return list[0];
     };
     
     GlobalScope.prototype.tail = function (list) {
-        assert(list instanceof Pair, "Procedure tail expects its argument to be a list");
-        return list.tail;
+        assert(Array.isArray(list), "Procedure tail expects its argument to be a list");
+        return list.slice(1);
     };
     
     GlobalScope.prototype.list = function () {
@@ -102,10 +91,6 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         
     };
     
-    GlobalScope.prototype["%"] = function (x, y) {
-        return x % y;
-    };
-    
     GlobalScope.prototype["="] = function (a, b) {
         return a === b;
     };
@@ -139,7 +124,7 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
     };
     
     GlobalScope.prototype.length = function (a) {
-        return Pair.toArray(a).length;
+        return a.length;
     };
     
     GlobalScope.prototype["procedure?"] = function (a) {
@@ -170,7 +155,7 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         return a === 0;
     };
     
-    GlobalScope.prototype.arity = function (a) {
+    GlobalScope.prototype["arity?"] = function (a) {
         return a.__argsCount__ || a.length || 0;
     };
     
@@ -208,35 +193,6 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
             
             return "object";
         }
-    };
-    
-    GlobalScope.prototype["append!"] = function (item, list) {
-        
-        var arr, newPair;
-        
-        assert(list instanceof Pair, "Procedure append! expects a list as its second argument");
-        
-        newPair = new Pair();
-        arr = list.segments();
-        arr[arr.length - 1].tail = newPair;
-        newPair.head = item;
-        
-        return list;
-    };
-    
-    GlobalScope.prototype["prepend!"] = function (item, list) {
-        
-        var newPair;
-        
-        assert(list instanceof Pair, "Procedure prepend! expects a list as its second argument");
-        
-        newPair = new Pair();
-        newPair.head = list.head;
-        newPair.tail = list.tail;
-        list.head = item;
-        list.tail = newPair;
-        
-        return list;
     };
     
     GlobalScope.prototype.append = makeAddItemToListFn("push", "append");
@@ -308,6 +264,8 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
             key = key.value;
         }
         
+        console.log("Getting key on #:", key);
+        
         return map.get(key);
     };
     
@@ -319,6 +277,8 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         if (key && key.value) {
             key = key.value;
         }
+        
+        console.log("Checking key on #:", key);
         
         return map.has(key);
     };
@@ -341,19 +301,17 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
     /**
      * Defers the execution of a function for $duration milliseconds.
      */
-    GlobalScope.prototype.defer = function (duration, fun) {
+    GlobalScope.prototype.defer = function (fun, duration) {
         
         assert(typeof fun === "function", 
-            "Procedure defer expects a procedure as its second argument");
+            "Procedure defer expects a procedure as its first argument");
         
         return setTimeout(fun, duration);
     };
     
     GlobalScope.prototype.range = function (start, end) {
         
-        var range = new Pair(), i, current = range;
-        
-        console.log("arguments in range():", arguments);
+        var range = [], i;
         
         assert(arguments.length === 2, "Procedure range expects exactly 2 arguments: start, end");
         assert(typeof start === "number" && typeof end === "number", "Procedure range expects" +
@@ -364,24 +322,16 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         
         if (start <= end) {
             for (i = start; i <= end; i += 1) {
-                appendItemToRange(i);
+                range.push(i);
             }
         }
         else {
             for (i = start; i >= end; i -= 1) {
-                appendItemToRange(i);
+                range.push(i);
             }
         }
         
-        console.dir(range);
-        
-        return range.tail || new Pair();
-        
-        function appendItemToRange (i) {
-            current.tail = new Pair();
-            current.tail.head = i;
-            current = current.tail;
-        }
+        return range;
     };
     
     GlobalScope.prototype.random = function () {
@@ -396,19 +346,9 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         return +a;
     };
     
-    GlobalScope.prototype.string = function () {
-        
-        var out = "";
-        
-        [].forEach.call(arguments, function (part) {
-            out += "" + part;
-        });
-        
-        return out;
+    GlobalScope.prototype.string = function (a) {
+        return "" + a;
     };
-    
-    GlobalScope.prototype.string.__description__ = 
-        "Builds one string from one or more arguments, converting any non-string values.";
     
     GlobalScope.prototype.round = function (a) {
         assert(typeof a === "number", "Procedure round expects its parameter to be a number");
@@ -419,15 +359,15 @@ define("MO5.script.GlobalScope", function (Map, Tokenizer, Pair, Printer) {
         
         var returnValue;
         
-        if (!Pair.isPair(arr)) {
-            throw new Error("Procedure each expects parameter 1 to be a list");
+        if (!Array.isArray(arr)) {
+            throw new Error("Procedure each expects parameter 1 to be of type list");
         }
         
         if (typeof fun !== "function") {
-            throw new Error("Procedure each expects parameter 2 to be of a procedure");
+            throw new Error("Procedure each expects parameter 2 to be of type function");
         }
         
-        arr.each(function (item, i) {
+        arr.forEach(function (item, i) {
             returnValue = fun(typeof item.value === "undefined" ? item : item.value, i);
         });
         

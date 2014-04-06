@@ -1,39 +1,25 @@
-/* global MO5 */
-MO5("MO5.script.Tokenizer", "MO5.script.Parser", "MO5.script.Context", 
-    "MO5.script.GlobalScope", "MO5.script.SpecialFormsContainer").
-define("MO5.script.Interpreter", 
-function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
+/* global MO5, setTimeout */
+MO5("MO5.types", "MO5.script.errors", "MO5.script.Tokenizer", "MO5.script.Parser", 
+    "MO5.script.Context", "MO5.script.GlobalScope", "MO5.script.SpecialFormsContainer", 
+    "MO5.script.Pair", "MO5.script.Printer", "MO5.Result", 
+    "ajax:" + MO5.path + "../script/standard-library.m5s").
+define("MO5.script.Interpreter", function (types, errors, Tokenizer, Parser, Context, GlobalScope, 
+       FormsContainer, Pair, Printer, Result, libraryRequest) {
     
-    function Interpreter () {
+    var libraryText = libraryRequest.responseText, printer = new Printer();
+    
+    function Interpreter (args) {
+        
+        args = args || {};
+        
         this.reset();
+        
+        this.debug = typeof args.debug !== "undefined" ? args.debug : false;
+        this.breakpoints = {};
+        
+        this.execute(libraryText, "standard-library.m5s");
+        this.lastFileName = "(unknown file)";
     }
-    
-    Interpreter.TypeError = function (message, line, column) {
-        this.name = "TypeError";
-        this.message = message || "";
-        this.scriptLine = line;
-        this.scriptColumn = column;
-    };
-    
-    Interpreter.TypeError.prototype = new Error();
-    
-    Interpreter.ReferenceError = function (message, line, column) {
-        this.name = "ReferenceError";
-        this.message = message || "";
-        this.scriptLine = line;
-        this.scriptColumn = column;
-    };
-    
-    Interpreter.ReferenceError.prototype = new Error();
-    
-    Interpreter.ScriptError = function (message, line, column) {
-        this.name = "ScriptError";
-        this.message = message || "";
-        this.scriptLine = line;
-        this.scriptColumn = column;
-    };
-    
-    Interpreter.ScriptError.prototype = new Error();
     
     Interpreter.prototype.reset = function () {
         this.parser = new Parser();
@@ -43,189 +29,336 @@ function (Tokenizer, Parser, Context, GlobalScope, FormsContainer) {
         this.lastColumn = 0;
     };
     
-    Interpreter.prototype.execute = function (input, context) {
-        
-        var ast, value, self = this;
-        
-        context = context || this.context;
-        
-        ast = this.parser.parse(input);
-        
-        ast.forEach(function (leaf) {
-            value = executeInContext(self, leaf, context);
-        });
-        
-        return value;
+    ///////////////////////////////////////////
+    // Debugging API
+    ///////////////////////////////////////////
+    
+    /**
+     * Constructs a breakpoint.
+     */
+    Interpreter.Breakpoint = function (file, line) {
+        this.file = file;
+        this.line = line;
+        this.silenced = false;
     };
     
-    Interpreter.prototype.scriptValueToString = function (value) {
-        
-        var text = "";
-        
-        function makeString (val) {
-            if (!val || !Array.isArray(val)) {
-                
-                if (val && typeof val === "object") {
-                    val = val.value;
-                }
-                
-                if (typeof val === "number" && val < 0) {
-                    text += "(- " + Math.abs(val) + ")"; 
-                }
-                else if (typeof val === "undefined") {
-                    text += "nil";
-                }
-                else {
-                    text += "" + val;
-                }
-                
-                return;
-            }
-            
-            text += "(";
-            
-            val.forEach(function (item, i) {
-                if (i === 0) {
-                    makeString(item);
-                }
-                else {
-                    text += " ";
-                    makeString(item);
-                }
-            });
-            
-            text += ")";
+    Interpreter.prototype.setBreakpoint = function (file, line) {
+        var breakpoint = new Interpreter.Breakpoint(file, line);
+        this.breakpoints[makeBreakpointPath(file, line)] = breakpoint;
+    };
+    
+    Interpreter.prototype.hasBreakpoint = function (file, line) {
+        return ((makeBreakpointPath(file, line)) in this.breakpoints);
+    };
+    
+    Interpreter.prototype.removeBreakpoint = function (file, line) {
+        if (!this.hasBreakpoint(file, line)) {
+            throw new Error("No such breakpoint");
         }
         
-        makeString(value);
-        
-        return text;
+        delete this.breakpoints[makeBreakpointPath(file, line)];
     };
+    
+    Interpreter.prototype.enableDebugMode = function () {
+        this.debug = true;
+    };
+    
+    Interpreter.prototype.disableDebugMode = function () {
+        this.debug = false;
+    };
+    
+    ////////////////////////////////////////////
+    // Evaluation
+    ////////////////////////////////////////////
+    
+    Interpreter.prototype.execute = function (input, fileName, context) {
+        
+        var ast, result = new Result(), self = this;
+        
+        fileName = fileName || "(unknown file)";
+        context = context || this.context;
+        this.lastFileName = fileName;
+        
+        ast = this.parser.parse(input, fileName);
+        
+        setTimeout(function () {
+            trampoline(
+                evaluateList(ast, context, self, 
+                    function (res) { return res; },
+                    function (e) { result.failure(e); }),
+                function (res) {
+                    if (res.length > 0) {
+                        result.success(res[res.length - 1]);
+                    }
+                    else {
+                        result.success(res);
+                    }
+                }
+            );
+        }, 0);
+        
+        return result.promise;
+    };
+    
+    /**
+     * The real magic happens here. Evaluates an expression.
+     * Uses a SpecialFormContainer instance for looking up all special forms
+     * and and a Context instance to lookup the variables and macros in
+     * the current scope.
+     */
+    function evaluate (input, context, interpreter, cc, error) {
+    
+        function _evaluate () {
+            
+            if (isLiteral(input)) {
+                return function _literalReturn () { return cc(getLiteralValue(input)); };
+            }
+            
+            if (isSymbol(input)) {
+                interpreter.lastLine = input.line;
+                interpreter.lastColumn = input.column;
+                
+                return function _symbolResolver () {
+                    return cc(resolveSymbol(input, context, interpreter));
+                };
+            }
+                
+            if (isLambdaDeclaration(input)) {
+                return function _lambdaCreator () {
+                    return cc(new Lambda(input.second(), input.tail.tail, context));
+                };
+            }
+            
+            if (isSpecialForm(input.head, interpreter)) {
+                return function _formResolver () {
+                    return evaluate(input.head, context, interpreter, function _formCall (form) {
+                        return form(execute, input, context, function _formResult (res) {
+                            input = res;
+                            return _evaluate;
+                        }, error);
+                    }, error);
+                };
+            }
+            else if (isMacro(input.head, context)) {
+                return function _macroFetcher () {
+                    return evaluate(input.head, context, interpreter, function _macroCall (macro) {
+                        return macro(context, input, function _macroResult (res) {
+                            input = res;
+                            return _evaluate;
+                        }, error);
+                    }, error);
+                };
+            }
+            else {
+                return function _functionEvaluation () {
+                    return evaluateList(input, context, interpreter, 
+                        function _listHandler (expressions) {
+                            
+                            var head = expressions[0];
+                            
+                            if (head instanceof Lambda) {
+                                return function _lambdaApplicator () {
+                                    var ctx = new Context(
+                                        createScope(head.params, expressions.slice(1)), 
+                                            head.context);
+                                    return evaluate(head.expressions, ctx, interpreter,
+                                        cc, error);
+                                };
+                            }
+                            else if (typeof head === "function") {
+                                return function _functionCall () {
+                                    return cc(head.apply(null, expressions.slice(1)));
+                                };
+                            }
+                            else {
+                                if (expressions.length > 0) {
+                                    return function _lastExpressionReturn () {
+                                        return cc(expressions[expressions.length - 1]);
+                                    };
+                                }
+                                else {
+                                    return function _nullReturn () { return cc(null); };
+                                }
+                            }
+                        
+                        }, error
+                    );
+                };
+            }
+            
+            function execute (pair, ctx, cc2) {
+                return evaluate(pair, ctx, interpreter, function (res) {
+                    return cc2(res);
+                }, error);
+            }
+        }
+        
+        return _evaluate;
+    }
+    
+    /**
+     * Evaluates the arguments to a function and returns the results
+     * in an array that can be applied to the head of a list.
+     */
+    function evaluateList (input, context, interpreter, cc, error) {
+        
+        var map = [], current = input, i = 0;
+        
+        if (current) {
+            return loopFn;
+        }
+        
+        return function () { return cc(map); };
+        
+        function loopFn () {
+            return evaluate(current.head, context, interpreter, function (res) {
+                map[i] = res;
+                i += 1;
+                current = current.tail;
+                
+                if (current) {
+                    return loopFn;
+                }
+                
+                return function () { return cc(map); };
+            }, error);
+        }
+    }
     
     return Interpreter;
     
+    //////////////////////////////////////
+    // Helper functions
+    //////////////////////////////////////
     
-    function executeInContext (interpreter, input, context) {
+    /**
+     * Checks whether something is a primitive value or a symbol object containing
+     * a primitive value.
+     */
+    function isLiteral (thing) {
         
-        var value;
+        var type = typeof thing;
+        var isNumber = type === "number";
+        var isString = type === "string";
+        var isBoolean = type === "boolean";
         
-        if (Array.isArray(input)) {
-            
-            if (input.firstLine) {
-                interpreter.lastLine = input.firstLine;
-                interpreter.lastColumn = input.firstColumn;
-            }
-            
-            return executeListInContext(interpreter, input, context);
+        if (!thing) {
+            return true;
         }
         
-        if (typeof input === "undefined") {
-            return null;
+        if (isNumber || isString || isBoolean) {
+            return true;
         }
         
-        if (input.type) {
-            interpreter.lastLine = input.line;
-            interpreter.lastColumn = input.column;
-        }
+        return thing.type === Tokenizer.BOOLEAN || thing.type === Tokenizer.NUMBER ||
+            thing.type === Tokenizer.STRING || thing.type === Tokenizer.NIL;
+    }
+    
+    /**
+     * Makes sure that we use the real value, not a symbol object.
+     */
+    function getLiteralValue (input) {
         
-        if (input.type === Tokenizer.SYMBOL) {
-            
-            if (input.value in interpreter.forms) {
-                return interpreter.forms[input.value];
-            }
-            
-            if (!context.has(input.value)) {
-                throw new Interpreter.ReferenceError("Unbound symbol '" + input.value + 
-                    "'", input.line, input.column);
-            }
-            
-            value = executeInContext(interpreter, context.find(input.value), context);
-            
-            return value;
-        }
-        
-        if (input.type === Tokenizer.STRING || input.type === Tokenizer.NUMBER) {
+        if (types.isObject(input)) {
             return input.value;
         }
         
-        if (typeof input === "function") {
-            return input;
-        }
-        
-        return typeof input.value === "undefined" ? input : input.value;
+        return input;
     }
     
-    function executeListInContext (interpreter, list, context) {
+    function isSymbol (input) {
         
-        var executedList, firstIsToken = false;
-        
-        if (list.length < 1) {
-            throw new Interpreter.TypeError("Unquoted empty list", 
-                list.lastLine || interpreter.lastLine, list.lastColumn || interpreter.lastColumn);
+        if (types.isObject(input) && input.type && input.type === Tokenizer.SYMBOL) {
+            return true;
         }
         
-        if (!list[0]) {
-            throw new Interpreter.TypeError("Head of list is not a function", 
-                list.lastLine || interpreter.lastLine, list.lastColumn || interpreter.lastColumn);
+        return false;
+    }
+    
+    function isLambdaDeclaration (input) {
+        return (
+            types.isObject(input.head) &&
+            input.head.type === Tokenizer.SYMBOL &&
+            input.head.value === "lambda"
+        );
+    }
+    
+    function isSpecialForm (input, interpreter) {
+        return isSymbol(input) && (input.value in interpreter.forms);
+    }
+    
+    function isMacro (input, context) {
+        return isSymbol(input) && context.hasMacro(input.value);
+    }
+    
+    /**
+     * Grabs a symbol's value from either a SpecialFormsContainer or
+     *  the macros and variables visible in the current scope.
+     */
+    function resolveSymbol (symbol, context, interpreter) {
+        
+        var symbolName = symbol.value;
+        
+        if (symbolName in interpreter.forms) {
+            return interpreter.forms[symbolName];
         }
         
-        firstIsToken = typeof list[0].type === "undefined" ? false : true;
-        
-        if (firstIsToken) {
-            interpreter.lastLine = list[0].line;
-            interpreter.lastColumn = list[0].column;
+        if (context.hasMacro(symbolName)) {
+            return context.findMacro(symbolName);
         }
         
-        if (firstIsToken && list[0].value in interpreter.forms) {
-            //console.log("Executing special form: ", list[0]);
-            return interpreter.forms[list[0].value](execute, list, context);
+        if (context.has(symbolName)) {
+            return context.find(symbolName);
         }
         
-        if (firstIsToken && context.hasMacro(list[0].value)) {
-            //console.log("Executing special form: ", list[0]);
-            return context.findMacro(list[0].value)(list.slice(1));
+        throw new errors.ReferenceError("Unbound symbol '" + symbolName + "'", 
+            symbol.line || interpreter.lastLine, symbol.column || interpreter.lastColumn, 
+            symbol.file || interpreter.lastFileName);
+    }
+    
+    function makeBreakpointPath (file, line) {
+        return "file>>>" + file + ">>>line>>>" + line;
+    }
+    
+    function Lambda (params, expressions, context) {
+        this.params = params;
+        this.expressions = expressions;
+        this.context = context;
+    }
+    
+    function createScope (expression, args) {
+        
+        var params, scope = {};
+        
+        if (!expression) {
+            params = [];
+        }
+        else {
+            params = expression.toArray();
         }
         
-        if (firstIsToken && list[0].type && list[0].type !== Tokenizer.SYMBOL) {
-            throw new Interpreter.TypeError("Head " + list[0].value + " of list " +
-                "is not a function", list[0].line, list[0].column);
-        }
-        else if (firstIsToken && list[0].type && !context.has(list[0].value)) {
-            throw new Interpreter.ReferenceError("Unbound symbol '" + list[0].value + "'", 
-                list[0].line, list[0].column);
+        if (params.length > args.length) {
+            throw new errors.ScriptError("Not enough arguments in call to procedure",
+                expression.line, expression.column, expression.file);
         }
         
-        
-        executedList = list.map(function (item) {            
-            return executeInContext(interpreter, item, context);
+        params.forEach(function (param, i) {
+            scope[param.value] = args[i];
         });
         
-        if (typeof executedList[0] === "function") {
-            return (function () {
-                
-                var val;
-                
-                try {
-                    val = executedList[0].apply(undefined, executedList.slice(1));
-                }
-                catch (e) {
-                    if (!e.scriptLine) {
-                        e.scriptLine = interpreter.lastLine;
-                        e.scriptColumn = interpreter.lastColumn;
-                    }
-                    
-                    throw e;
-                }
-            
-                return val;
-            }());
-        }
+        scope.arguments = args;
         
-        return execute(executedList, context);
-        
-        function execute (list, context) {
-            return executeInContext(interpreter, list, context);
-        }
+        return scope;
     }
     
+    function trampoline (fn, cc) {
+        
+        var result = fn();
+        
+        while (typeof result === "function") {
+            result = result();
+        }
+        
+        return cc(result);
+    }
 });

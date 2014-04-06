@@ -48,7 +48,7 @@ MO5().define("MO5.script.Tokenizer", function () {
         return undefined;
     };
     
-    Tokenizer.prototype.tokenize = function (text) {
+    Tokenizer.prototype.tokenize = function (text, fileName) {
     
         var tokens = [], line = 0, column = 0, charOffset = -1, currentChar = null, lastColumn = 0;
         
@@ -183,7 +183,8 @@ MO5().define("MO5.script.Tokenizer", function () {
                 return true;
             }
             else if (char === ";") {
-                token = advanceComment();
+                advanceComment();
+                return true;
             }
             else if (char === '"') {
                 token = advanceDoubleQuotedString();
@@ -214,7 +215,9 @@ MO5().define("MO5.script.Tokenizer", function () {
                 line: realLine,
                 column: realColumn,
                 value: value,
-                length: realLength
+                length: realLength,
+                file: fileName,
+                toString: function () { return value; }
             };
         }
         
@@ -285,7 +288,7 @@ MO5().define("MO5.script.Tokenizer", function () {
             
             while (advance()) {
                 if (opParens === 0 && currentChar !== "(") {
-                    expression += advanceAll(/[^\(\) \n]/);
+                    expression += advanceAll(/[^\(\) \n']/);
                     break;
                 }
                 

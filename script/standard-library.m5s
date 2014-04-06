@@ -1,0 +1,63 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; MO5 Script Standard Library
+;; ---------------------------
+;;
+;; (C) 2013 J. Steinbeck
+;;
+;; License: New BSD (see LICENSE file)
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define cons pair)
+(define car head)
+(define cdr tail)
+(define rest tail)
+
+(define (list)
+    arguments)
+
+; Evaluates a condition and if the condition is true,
+; it evaluates all of the other arguments passed to
+; the macro.
+(macro (when $a)
+    (define $pgn (tail $arguments))
+    (if (eval $a)
+        (progn
+            (define $pgnev (pair 'progn $pgn))
+            (print $pgnev)
+            (eval $pgnev))))
+
+
+(macro (unless $c)
+    (define $pgn (tail $arguments))
+    (if (not (eval $c))
+        (progn
+            (define $pgnev (pair 'progn $pgn))
+            (print $pgnev)
+            (eval $pgnev))))
+  
+
+(define (object)
+    (define h (#))
+
+    (#-set h 'set (lambda (key value)
+        (#-set h key value)))
+    
+    (lambda (message value)
+    
+        (print message)
+    
+        (if (#-has? h message)
+        
+            (progn
+                (define property (#-get h message))
+                (if (procedure? property)
+                    (apply property (tail arguments))
+                    property))
+                    
+            (progn
+                (if (> (length arguments) 1)
+                    (#-set h message value)
+                    (print "unexpected number of arguments"))))))
+

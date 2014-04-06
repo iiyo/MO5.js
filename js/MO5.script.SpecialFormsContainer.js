@@ -1,162 +1,252 @@
 /* global MO5 */
-MO5("MO5.script.Context", "MO5.script.Tokenizer").
-define("MO5.script.SpecialFormsContainer", function (Context, Tokenizer) {
+MO5("MO5.script.errors", "MO5.script.Context", "MO5.script.Tokenizer", 
+    "MO5.script.Pair", "MO5.types").
+define("MO5.script.SpecialFormsContainer", function (errors, Context, Tokenizer, Pair, types) {
 
     function SpecialFormsContainer () {}
     
-    SpecialFormsContainer.prototype["eval"] = function (execute, list, context) {
-        var listToEvaluate;
+    SpecialFormsContainer.prototype.progn = function (execute, pair, context, cc) {
         
-        if (list.length !== 2) {
-            throw new Error("Special form eval takes exactly one argument.");
-        }
+        var returnValue, heads, len, i = 0;
         
-        if (list[1] && list[1][0] && list[1][0].type === Tokenizer.SYMBOL && 
-                list[1][0].value === "quote") {
-            listToEvaluate = list[1][1];
+        heads = pair.tail.toArray();
+        len = heads.length;
+        
+        if (len > 0) {
+            return next;
         }
         else {
-            listToEvaluate = list[1];
+            return function () { return cc(returnValue); };
         }
         
-        console.log("listToEvaluate:", listToEvaluate);
+        function next () {
+            return execute(heads.shift(), context, function (res) {
+                returnValue = res;
+                
+                if (i === len - 1) {
+                    return function () { return cc(returnValue); };
+                }
+                else {
+                    i += 1;
+                    return next;
+                }
+            });
+        }
         
-        return execute(listToEvaluate, context);
     };
     
-    SpecialFormsContainer.prototype.macro = function (execute, list, context) {
+    SpecialFormsContainer.prototype.progn.__useTco__ = true;
+    
+    SpecialFormsContainer.prototype["eval"] = function (execute, pair, context, cc, error) {
+        
+        if (pair.segments().length !== 2) {
+            return error(new errors.ScriptError("Special form eval takes exactly one argument.", 
+                pair.head.line, pair.head.column));
+        }
+        
+        return function _eval1 () {
+            return execute(pair.tail.head, context, function _eval2 (pairToEvaluate) {
+                return function _eval3 () { return execute(pairToEvaluate, context, cc); };
+            });
+        };
+    };
+    
+    SpecialFormsContainer.prototype["eval"].__useTco__ = true;
+    
+    SpecialFormsContainer.prototype["dump-context"] = function (execute, pair, context, cc) {
+        console.log(context);
+        return cc;
+    };
+    
+    SpecialFormsContainer.prototype.macro = function (execute, pair, context, cc) {
         
         var name;
         
-        name = list[1][0].value;
+        name = pair.tail.head.head.value;
         
-        function lambda () {
-            var scope = {}, args = [].slice.call(arguments), ret, newContext;
+        function macro (ctx) {
+            var scope = {}, args = [].slice.call(arguments, 1), ret, newContext;
             
-            console.log("list in call to macro: ", list, "; context:", context);
+            //console.log("pair in call to macro: ", pair, "; context:", context);
             
-            list[1].slice(1).forEach(function (item, i) {
-                scope[item.value] = args[0][i];
+            pair.tail.head.tail.each(function (item, i) {
+                scope[item.value] = args[0].nth(i + 2);
             });
             
-            scope.$arguments = [{
-                type: Tokenizer.QUOTE,
-                value: "quote"
-            }, args[0]];
+            scope.$arguments = args[0].tail;
             
-            console.log("scope in macro:", scope);
+            //console.log("scope in macro:", scope);
             
-            newContext = new Context(scope, context);
+            newContext = new Context(scope, ctx);
             
-            list.slice(2).forEach(function (item) {
+            pair.tail.tail.each(function (item) {
                 ret = execute(item, newContext);
             });
             
             return ret;
         }
         
-        lambda.__argsCount__ = list[1].length || 0;
+        macro.__argsCount__ = pair.tail.length || 0;
+        macro.isMacro = true;
+        macro.__name__ = name;
         
-        context.setMacro(name, lambda);
+        context.setMacro(name, macro);
         
-        return lambda;
+        return function _macroDefinitionReturn () { return cc(macro); };
     };
     
-    SpecialFormsContainer.prototype.define = function (execute, list, context) {
+    SpecialFormsContainer.prototype.macro.__useTco__ = true;
+    
+    SpecialFormsContainer.prototype["exists?"] = function (execute, pair, context, cc) {
+        return cc(!!(pair.tail && pair.tail.type && pair.tail.type === Tokenizer.SYMBOL && 
+            (context.has(pair.tail.value) || context.hasMacro(pair.tail.value))));
+    };
+    
+    SpecialFormsContainer.prototype["exists?"].__useTco__ = true;
+    
+    SpecialFormsContainer.prototype.define = function (execute, pair, context, cc) {
         
-        var name, value, lambdaList;
+        var name, lambdaList, description;
         
-        if (Array.isArray(list[1])) {
-            name = list[1][0].value;
-            lambdaList = [{type: Tokenizer.SYMBOL, value: "lambda"}, list[1].slice(1)];
+        if (pair.tail.head.head) {
+            name = pair.tail.head.head.value;
+            lambdaList = new Pair({type: Tokenizer.SYMBOL, value: "lambda"});
             
-            list.slice(2).forEach(function (item) {
-                lambdaList.push(item);
+            lambdaList.tail = new Pair(pair.second().tail, pair.tail.tail);
+            
+            if (pair.tail.tail.head && types.isObject(pair.tail.tail.head) && 
+                    pair.tail.tail.head.type && pair.tail.tail.head.type === Tokenizer.STRING) {
+                description = pair.tail.tail.head.value;
+                pair.tail.tail = pair.tail.tail.tail;
+            }
+            
+            return execute(lambdaList, context, function (value) {
+                value.__name__ = name;
+                value.__description__ = description;
+                value.__ast__ = pair;
+                
+                context.set(name, value);
+                
+                return cc(value);
             });
-            
-            value = execute(lambdaList, context);
         }
         else {
-            name = list[1].value;
-            value = list[2].value ? list[2].value : execute(list[2], context);
+            name = pair.tail.head.value;
+            
+            if (pair.tail.tail.value) {
+                context.set(name, pair.tail.tail.value);
+                return cc(pair.tail.tail.value);
+            }
+            
+            return execute(pair.tail.tail.head, context, function (res) {
+                context.set(name, res);
+                return cc(res);
+            });
         }
-        
-        context.set(name, value);
-        
-        return value;
     };
     
-    SpecialFormsContainer.prototype.set = function (execute, list, context) {
+    SpecialFormsContainer.prototype["set!"] = function (execute, pair, context, cc, error) {
         
-        var name, value;
+        var name = pair.second().value;
         
-        name = list[1].value;
-        value = list[2].value ? list[2].value : execute(list[2], context);
+        return execute(pair.third(), context, function (value) {
+            try {
+                context.change(name, value);
+            }
+            catch (e) {
+                return error(new errors.ReferenceError(
+                    "Cannot set value on undefined symbol '" + name + "'",
+                    pair.head.line, pair.head.column, pair.head.file));
+            }
+        });
         
-        try {
-            context.change(name, value);
-        }
-        catch (e) {
-            throw new Error("Cannot set value on undefined symbol '" + name + "'");
-        }
-        
-        return value;
     };
     
-    SpecialFormsContainer.prototype["if"] = function (execute, list, context) {
+    SpecialFormsContainer.prototype["if"] = function (execute, pair, context, cc) {
         
-        console.log("list[1] in if: ", list[1]);
-        
-        if (execute(list[1], context)) {
-            return execute(list[2], context);
-        }
-        
-        return execute(list[3], context);
+        return execute(pair.second(), context, function _handleIfConditionResult (condition) {
+            if (condition) {
+                return execute(pair.third(), context, function _handleThenResult (res) {
+                    return function _callContinuationWithThenResult () { return cc(res); };
+                });
+            }
+            
+            return execute(pair.fourth(), context, function _handleElseResult (res) {
+                return function _callContinuationWithElseResult() { return cc(res); };
+            });
+        });
     };
     
-    SpecialFormsContainer.prototype.quote = function (execute, list, context) {
-        return list[1];
+    SpecialFormsContainer.prototype["if"].__useTco__ = true;
+    
+    SpecialFormsContainer.prototype["if"].__description__ = 
+        "Evaluates the first argument " +
+        " ('condition') and checks whether the result is true. \n" +
+        "If it the result true it evaluates the second argument ('then').\n" +
+        "If it the result is false it evaluates the third argument (else) instead.\n\n" +
+        "Form: (if [condition] [then] [else])";
+    
+    SpecialFormsContainer.prototype.quote = function (execute, pair, context, cc) {
+        return cc(pair.tail.head);
     };
     
-    SpecialFormsContainer.prototype["to-quote"] = function (execute, list, context) {
+    SpecialFormsContainer.prototype.quote.__description__ = "Returns an expression unevaluated.";
+    
+    SpecialFormsContainer.prototype["to-quote"] = function (execute, pair, context, cc) {
         
         var quote = {
-            type: Tokenizer.QUOTE,
+            type: Tokenizer.SYMBOL,
             value: "quote",
-            line: list[0].line,
-            column: list[0].column
+            line: pair.head.line,
+            column: pair.head.column
         };
         
-        return [quote, list[1]];
+        cc(new Pair(quote, pair.tail));
     };
     
-    SpecialFormsContainer.prototype.lambda = function (execute, list, context) {
+    SpecialFormsContainer.prototype.lambda = function (execute, pair, context) {
+        
+        if (pair.second()) {
+            pair.second().each(function (item) {
+                if (!types.isObject(item) || item.type !== Tokenizer.SYMBOL) {
+                    throw new errors.ScriptError("Lambda parameters must be symbols", 
+                        pair.head.line, pair.head.column, pair.head.file);
+                }
+            });
+        }
         
         function lambda () {
             var scope = {}, args = arguments, ret, newContext;
             
-            console.log("list in call to lambda: ", list, "; context:", context);
+            if (types.isObject(pair.tail) && types.isObject(pair.tail.head) && 
+                    pair.tail.head.isPair) {
+                pair.tail.head.each(function (item, i) {
+                    scope[item.value] = args[i];
+                });
+            }
             
-            list[1].forEach(function (item, i) {
-                scope[item.value] = args[i];
-            });
-            
-            scope.arguments = [].slice.call(args);
+            scope.arguments = Pair.fromArray([].slice.call(arguments));
             
             newContext = new Context(scope, context);
             
-            list.slice(2).forEach(function (item) {
-                ret = execute(item, newContext);
-            });
+            if (types.isObject(pair.tail) && types.isObject(pair.tail.tail) && 
+                    pair.tail.tail.isPair) {
+                pair.tail.tail.each(function (item) {
+                    ret = execute(item, newContext);
+                });
+            }
             
             return ret;
         }
         
-        lambda.__argsCount__ = list[1].length || 0;
+        lambda.__argsCount__ = pair.tail.length || 0;
+        lambda.__ast__ = pair;
         
         return lambda;
         
     };
+    
+    SpecialFormsContainer.prototype.lambda.__useTco__ = true;
     
     SpecialFormsContainer.prototype.lambda.__description__ = "Defines an anonymous procedure.";
     
