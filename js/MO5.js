@@ -422,6 +422,12 @@ var MO5 = (function () {
         }
         
         function onScriptLoadSuccess () {
+            
+            if (!modules[moduleName] || !modules[moduleName].addObserver) {
+                throw new Error("MO5: No module definition for module '" + moduleName +
+                    "' found in specified source file '" + MO5.modules[moduleName] + "'.");
+            }
+            
             modules[moduleName].addObserver(onSuccess);
             
             if (modules[moduleName].dependenciesReady()) {
