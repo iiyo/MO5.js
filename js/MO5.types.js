@@ -7,6 +7,10 @@ MO5().define("MO5.types", function () {
         return (typeof thing === "object" && thing !== null);
     };
     
+    types.isString = function (thing) {
+        return typeof thing === "string";
+    };
+    
     return types;
 
 });
