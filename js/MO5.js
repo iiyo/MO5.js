@@ -219,8 +219,6 @@ var MO5 = (function () {
         }
         
         if (!this.dependenciesReady()) {
-            //console.log("Trying to finish() module '" + this.name + "' while its dependencies " +
-            //    "are not ready.");
             this.addObserverToDependenciesNotReady(function () { self.finish(); });
             return;
         }
@@ -295,7 +293,8 @@ var MO5 = (function () {
                                 callback();
                             }
                             catch (e) {
-                                console.log("Error while loading module '" + moduleName + "':", e.stack, callback);
+                                console.error("Error while loading module '" + moduleName +
+                                    "':", e.stack, callback);
                             }
                         });
                         
@@ -304,7 +303,7 @@ var MO5 = (function () {
                                 callback.apply(undefined, dependencies);
                             }
                             catch (e) {
-                                console.log(e.message, e.stack);
+                                console.error(e.message, e.stack);
                                 console.dir(callback);
                             }
                         });
@@ -350,7 +349,6 @@ var MO5 = (function () {
             return capabilityObject;
             
             function finishModule () {
-                //console.log("Running module.finish() from within finishModule(). moduleName: " + moduleName);
                 module.finish();
             }
         }
@@ -407,7 +405,7 @@ var MO5 = (function () {
     
     function loadModule (moduleName, onSuccess, onError) {
         
-        onError = onError || function (e) { console.log(e.message, e.stack); };
+        onError = onError || function (e) { console.error(e.message, e.stack); };
         
         if (!(moduleName in MO5.modules)) {
             onError(new Error("Unknown module '" + moduleName + "'."));
