@@ -32,27 +32,42 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5 */
+/* global MO5, module, window */
 
-MO5().define("MO5.Exception", function () {
+(function MO5ExceptionBootstrap () {
     
-    function Exception (msg) {
-        var e = Error.apply(null, arguments), key;
-        
-        // we need to copy the properties manually since
-        // Javascript's Error constructor ignores the first
-        // parameter used with .call()...
-        for (key in e) {
-            this[key] = e[key];
-        }
-        
-        this.message = msg;
-        this.name = "MO5.Exception";
+    if (typeof MO5 === "function") {
+        MO5().define("MO5.Exception", MO5ExceptionModule);
+    }
+    else if (typeof window !== "undefined") {
+        window.MO5 = window.MO5 || {};
+        window.MO5.Exception = MO5ExceptionModule();
+    }
+    else {
+        module.exports = MO5ExceptionModule();
     }
     
-    Exception.prototype = new Error();
-    Exception.prototype.constructor = Exception;
+    function MO5ExceptionModule () {
 
-    return Exception;
+        function Exception (msg) {
+            var e = Error.apply(null, arguments), key;
+
+            // we need to copy the properties manually since
+            // Javascript's Error constructor ignores the first
+            // parameter used with .call()...
+            for (key in e) {
+                this[key] = e[key];
+            }
+
+            this.message = msg;
+            this.name = "MO5.Exception";
+        }
+
+        Exception.prototype = new Error();
+        Exception.prototype.constructor = Exception;
+
+        return Exception;
+
+    }
     
-});
+}());

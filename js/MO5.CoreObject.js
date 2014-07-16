@@ -32,173 +32,191 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5 */
+/* global MO5, window, module, require */
 
-MO5("MO5.Exception", "MO5.fail", "MO5.EventBus").
-define("MO5.CoreObject", function (Exception, fail, EventBus) {
-    
-    var flags = {}, prefix = "CoreObject", highestId = 0;
-    
-    /**
-     * The MO5 base type for almost all other types used in MO5.
-     * 
-     * All CoreObject instances are observable by subscribing
-     * to the events that they emit. 
-     * 
-     * @event destroyed()
-     */
-    function CoreObject (args) {
-        
-        args = args || {};
-        args.bus = args.bus || {};
-        
-        highestId += 1;
-        
-        this.id = highestId;
-        this.destroyed = false;
-        
-        EventBus.inject(this, args.bus);
-        
-        flags[this.id] = {};
+(function MO5CoreObjectBootstrap () {
+
+    if (typeof MO5 === "function") {
+        MO5("MO5.Exception", "MO5.fail", "MO5.EventBus").
+        define("MO5.CoreObject", MO5CoreObjectModule);
     }
-    
-    CoreObject.prototype.setFlag = function (key) {
-        
-        var internalKey = externalKeyToInternalKey(key);
-        
-        if (!flags[this.id]) {
-            return;
+    else if (typeof window !== "undefined") {
+        window.MO5.CoreObject = MO5CoreObjectModule(MO5.Exception, MO5.fail, MO5.EventBus);
+    }
+    else {
+        module.exports = MO5CoreObjectModule(
+            require("./MO5.Exception.js"),
+            require("./MO5.fail.js"),
+            require("./MO5.EventBus.js")
+        );
+    }
+
+    function MO5CoreObjectModule (Exception, fail, EventBus) {
+
+        var flags = {}, prefix = "CoreObject", highestId = 0;
+
+        /**
+         * The MO5 base type for almost all other types used in MO5.
+         * 
+         * All CoreObject instances are observable by subscribing
+         * to the events that they emit. 
+         * 
+         * @event destroyed()
+         */
+        function CoreObject (args) {
+
+            args = args || {};
+            args.bus = args.bus || {};
+
+            highestId += 1;
+
+            this.id = highestId;
+            this.destroyed = false;
+
+            EventBus.inject(this, args.bus);
+
+            flags[this.id] = {};
         }
-        
-        flags[this.id][internalKey] = true;
-        
-        this.trigger("flag_set", key);
-    };
-    
-    CoreObject.prototype.removeFlag = function (flag) {
-        if (!this.hasFlag(flag)) {
-            return;
-        }
-        
-        delete flags[this.id][externalKeyToInternalKey(flag)];
-        
-        this.trigger("flag_removed", flag);
-    };
-    
-    CoreObject.prototype.hasFlag = function (key) {
-        
-        var internalKey = externalKeyToInternalKey(key);
-        
-        return flags[this.id] && 
-            flags[this.id].hasOwnProperty(internalKey);
-    };
-    
-    CoreObject.prototype.getFlags = function () {
-        var arr = [];
-        
-        for (var key in flags[this.id]) {
-            arr.push(internalKeyToExternalKey(key));
-        }
-        
-        return arr;
-    };
-    
-    CoreObject.prototype.connect = function (event1, obj2, event2, async) {
-        
-        var self = this;
-        
-        event1 = event1 || "*";
-        event2 = event2 || "*";
-        
-        if (!obj2 || !(obj2 instanceof CoreObject)) {
-            fail(new Exception("Cannot connect events: Parameter 3 is " +
-                "expected to be of type CoreObject."));
+
+        CoreObject.prototype.setFlag = function (key) {
+
+            var internalKey = externalKeyToInternalKey(key);
+
+            if (!flags[this.id]) {
+                return;
+            }
+
+            flags[this.id][internalKey] = true;
+
+            this.trigger("flag_set", key);
+        };
+
+        CoreObject.prototype.removeFlag = function (flag) {
+            if (!this.hasFlag(flag)) {
+                return;
+            }
+
+            delete flags[this.id][externalKeyToInternalKey(flag)];
+
+            this.trigger("flag_removed", flag);
+        };
+
+        CoreObject.prototype.hasFlag = function (key) {
+
+            var internalKey = externalKeyToInternalKey(key);
+
+            return flags[this.id] && 
+                flags[this.id].hasOwnProperty(internalKey);
+        };
+
+        CoreObject.prototype.getFlags = function () {
+            var arr = [];
+
+            for (var key in flags[this.id]) {
+                arr.push(internalKeyToExternalKey(key));
+            }
+
+            return arr;
+        };
+
+        CoreObject.prototype.connect = function (event1, obj2, event2, async) {
+
+            var self = this;
+
+            event1 = event1 || "*";
+            event2 = event2 || "*";
+
+            if (!obj2 || !(obj2 instanceof CoreObject)) {
+                fail(new Exception("Cannot connect events: Parameter 3 is " +
+                    "expected to be of type CoreObject."));
+                return this;
+            }
+
+            function listener (data) {
+
+                data = data || null;
+
+                if (typeof async !== "undefined" && (async === true || async === false)) {
+                    obj2.trigger(event2, data, async);
+                }
+                else {
+                    obj2.trigger(event2, data);
+                }
+            }
+
+            this.subscribe(listener, event1);
+
+            obj2.once(function () { self.unsubscribe(listener, event1); }, "destroyed");
+
             return this;
-        }
-        
-        function listener (data) {
-            
-            data = data || null;
-            
-            if (typeof async !== "undefined" && (async === true || async === false)) {
-                obj2.trigger(event2, data, async);
+        };
+
+        CoreObject.prototype.implements = function (interface) {
+
+            for (var key in interface) {
+                if (typeof this[key] !== typeof interface[key]) {
+                    return false;
+                }
             }
-            else {
-                obj2.trigger(event2, data);
+
+            return true;
+        };
+
+        /**
+         * CoreObject instances have a unique ID; when used as a string,
+         * the ID of the object is used as a representation.
+         */
+        CoreObject.prototype.toString = function () {
+            return "" + this.id;
+        };
+
+        CoreObject.prototype.valueOf = function () {
+            return this.id;
+        };
+
+        /**
+         * Emits the destroyed() event and deletes all of the instances properties.
+         * After this method has been called on an CoreObject, it can not be used
+         * anymore and should be considered dead.
+         * 
+         * All users of a CoreObject should hook to the destroyed() event and delete
+         * their references to the CoreObject when its destroyed() event is emitted.
+         */
+        CoreObject.prototype.destroy = function () {
+
+            var id = this.id;
+
+            this.destroyed = true;
+            this.trigger("destroyed", null, false);
+
+            for (var key in this) {
+                this[key] = null;
             }
+
+            delete flags[id];
+
+            this.destroyed = true;
+            this.id = id;
+
+            delete this.toString;
+            delete this.valueOf;
+
+        };
+
+        return CoreObject;
+
+        ///////////////////////////////////
+        // Helper functions
+        ///////////////////////////////////
+
+        function externalKeyToInternalKey (key) {
+            return prefix + key;
         }
-        
-        this.subscribe(listener, event1);
-        
-        obj2.once(function () { self.unsubscribe(listener, event1); }, "destroyed");
-        
-        return this;
-    };
-    
-    CoreObject.prototype.implements = function (interface) {
-        
-        for (var key in interface) {
-            if (typeof this[key] !== typeof interface[key]) {
-                return false;
-            }
+
+        function internalKeyToExternalKey (key) {
+            return key.replace(new RegExp(prefix), "");
         }
-        
-        return true;
-    };
-    
-    /**
-     * CoreObject instances have a unique ID; when used as a string,
-     * the ID of the object is used as a representation.
-     */
-    CoreObject.prototype.toString = function () {
-        return "" + this.id;
-    };
-    
-    CoreObject.prototype.valueOf = function () {
-        return this.id;
-    };
-    
-    /**
-     * Emits the destroyed() event and deletes all of the instances properties.
-     * After this method has been called on an CoreObject, it can not be used
-     * anymore and should be considered dead.
-     * 
-     * All users of a CoreObject should hook to the destroyed() event and delete
-     * their references to the CoreObject when its destroyed() event is emitted.
-     */
-    CoreObject.prototype.destroy = function () {
-        
-        var id = this.id;
-        
-        this.destroyed = true;
-        this.trigger("destroyed", null, false);
-        
-        for (var key in this) {
-            this[key] = null;
-        }
-        
-        delete flags[id];
-        
-        this.destroyed = true;
-        this.id = id;
-        
-        delete this.toString;
-        delete this.valueOf;
-        
-    };
-    
-    return CoreObject;
-    
-    ///////////////////////////////////
-    // Helper functions
-    ///////////////////////////////////
-    
-    function externalKeyToInternalKey (key) {
-        return prefix + key;
+
     }
-    
-    function internalKeyToExternalKey (key) {
-        return key.replace(new RegExp(prefix), "");
-    }
-    
-});
+
+}());

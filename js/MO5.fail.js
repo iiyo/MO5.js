@@ -32,30 +32,43 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5 */
+/* global MO5, window, console, module */
 
-MO5().define("MO5.fail", function () {
+(function MO5failBootstrap () {
     
-    /**
-     * A function to log errors with stack traces to the console.
-     * Useful if you encounter some minor errors that are no show-stoppers
-     * and should therefore not be thrown, but which can help
-     * debug your code by looking at the console output.
-     */
-    function fail (e) {
-        
-        if (console.error) {
-            console.error(e.toString());
-        }
-        else {
-            console.log(e.toString());
-        }
-        
-        if (e.stack) {
-            console.log(e.stack);
-        }
+    if (typeof MO5 === "function") {
+        MO5().define("MO5.fail", MO5failModule);
+    }
+    else if (typeof window !== "undefined") {
+        window.MO5.fail = MO5failModule();
+    }
+    else {
+        module.exports = MO5failModule();
     }
     
-    return fail;
-    
-});
+    function MO5failModule () {
+
+        /**
+         * A function to log errors with stack traces to the console.
+         * Useful if you encounter some minor errors that are no show-stoppers
+         * and should therefore not be thrown, but which can help
+         * debug your code by looking at the console output.
+         */
+        function fail (e) {
+
+            if (console.error) {
+                console.error(e.toString());
+            }
+            else {
+                console.log(e.toString());
+            }
+
+            if (e.stack) {
+                console.log(e.stack);
+            }
+        }
+
+        return fail;
+
+    }
+}());
