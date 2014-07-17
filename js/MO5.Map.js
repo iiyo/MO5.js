@@ -219,6 +219,20 @@
 
             return keys;
         };
+        
+        /**
+         * Returns the map's values in an array.
+         */
+        Map.prototype.values = function () {
+        
+            var values = [];
+            
+            this.forEach(function (item) {
+                values.push(item);
+            });
+            
+            return values;
+        };
 
         Map.prototype.clone = function () {
             var clone = new Map();
