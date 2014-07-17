@@ -32,86 +32,103 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5 */
+/* global MO5, window, require, module */
 
-MO5("MO5.CoreObject", "MO5.Queue").
-define("MO5.List", function (CoreObject, Queue) {
+(function MO5ListBootstrap () {
 
-    function List () {
-        CoreObject.call(this);
-
-        this.unsubscribers = {};
-        this.items = [];
+    if (typeof MO5 === "function") {
+        MO5("MO5.CoreObject", "MO5.Queue").
+        define("MO5.List", MO5ListModule);
     }
+    else if (typeof window !== "undefined") {
+        window.MO5.List = MO5ListModule(MO5.CoreObject, MO5.Queue);
+    }
+    else {
+        module.exports = MO5ListModule(
+            require("./MO5.CoreObject.js"),
+            require("./MO5.Queue.js")
+        );
+    }
+    
+    function MO5ListModule (CoreObject, Queue) {
 
-    List.prototype = new CoreObject();
+        function List () {
+            
+            CoreObject.call(this);
 
-    List.prototype.length = function () {
-        return this.items.length;
-    };
+            this.unsubscribers = {};
+            this.items = [];
+        }
 
-    List.prototype.append = function (value) {
+        List.prototype = new CoreObject();
 
-        var self = this;
+        List.prototype.length = function () {
+            return this.items.length;
+        };
 
-        function listener () {
-            var i, len;
+        List.prototype.append = function (value) {
 
-            for (i = 0, len = self.items.length; i < len; i += 1) {
-                if (self.items[i] === value) {
-                    self.items.splice(i, 1);
+            var self = this;
+
+            function listener () {
+                var i, len;
+
+                for (i = 0, len = self.items.length; i < len; i += 1) {
+                    if (self.items[i] === value) {
+                        self.items.splice(i, 1);
+                    }
                 }
+
+                delete self.unsubscribers[+value];
             }
 
-            delete self.unsubscribers[+value];
-        }
+            function unsubscribe () {
+                value.unsubscribe(listener, "destroyed");
+            }
 
-        function unsubscribe () {
-            value.unsubscribe(listener, "destroyed");
-        }
+            if (value instanceof CoreObject) {
+                this.unsubscribers[+value] = unsubscribe;
+                value.subscribe(listener, "destroyed");
+            }
 
-        if (value instanceof CoreObject) {
-            this.unsubscribers[+value] = unsubscribe;
-            value.subscribe(listener, "destroyed");
-        }
+            this.items.push(value);
 
-        this.items.push(value);
+            return this;
+        };
 
-        return this;
-    };
+        List.prototype.remove = function (i) {
 
-    List.prototype.remove = function (i) {
+            var val = this.items[i];
 
-        var val = this.items[i];
+            if (val instanceof CoreObject) {
+                this.unsubscribers[val.id]();
+                delete this.unsubscribers[val.id];
+            }
 
-        if (val instanceof CoreObject) {
-            this.unsubscribers[val.id]();
-            delete this.unsubscribers[val.id];
-        }
+            this.items.splice(i, 1);
 
-        this.items.splice(i, 1);
+            return this;
+        };
 
-        return this;
-    };
+        List.prototype.at = function (i) {
+            return this.items[+i];
+        };
 
-    List.prototype.at = function (i) {
-        return this.items[+i];
-    };
+        List.prototype.toQueue = function () {
+            var q = new Queue();
 
-    List.prototype.toQueue = function () {
-        var q = new Queue();
+            this.items.forEach(function (item) {
+                q.add(item);
+            });
 
-        this.items.forEach(function (item) {
-            q.add(item);
-        });
+            return q;
+        };
 
-        return q;
-    };
-    
-    List.prototype.forEach = function (fn) {
-        this.items.forEach(fn);
-    };
-    
-    return List;
+        List.prototype.forEach = function (fn) {
+            this.items.forEach(fn);
+        };
 
-});
+        return List;
+
+    }
+}());
