@@ -62,9 +62,24 @@
             return new EventBus(args);
         };
 
-        EventBus.prototype.subscribe = function(listener, event) {
+        EventBus.prototype.subscribe = function(parameter1, parameter2) {
 
-            if (typeof event !== "undefined" && typeof event !== "string" && typeof event !== "number") {
+            var listener, event, self = this;
+            
+            if (parameter2 === undefined) {
+                event = "*";
+                listener = parameter1;
+            }
+            else if (typeof parameter1 === "string" || typeof parameter1 === "number") {
+                event = parameter1;
+                listener = parameter2;
+            }
+            else if (typeof parameter2 === "string" || typeof parameter2 === "number") {
+                event = parameter2;
+                listener = parameter1;
+            }
+            
+            if (typeof event !== "string" && typeof event !== "number") {
                 throw new Error("Event names can only be strings or numbers! event: ", event);
             }
 
@@ -84,14 +99,35 @@
                     bus: this
                 }
             );
+            
+            return function unsubscriber () {
+                self.unsubscribe(listener, event);
+            };
         };
 
-        EventBus.prototype.unsubscribe = function(listener, event) {
+        EventBus.prototype.unsubscribe = function(parameter1, parameter2) {
 
-            var cbs, len, i;
-
-            if (typeof event !== "undefined" && typeof event !== "string" && typeof event !== "number") {
+            var cbs, len, i, listener, event;
+            
+            if (parameter2 === undefined) {
+                event = "*";
+                listener = parameter1;
+            }
+            else if (typeof parameter1 === "string" || typeof parameter1 === "number") {
+                event = parameter1;
+                listener = parameter2;
+            }
+            else if (typeof parameter2 === "string" || typeof parameter2 === "number") {
+                event = parameter2;
+                listener = parameter1;
+            }
+            
+            if (typeof event !== "string" && typeof event !== "number") {
                 throw new Error("Event names can only be strings or numbers! event: ", event);
+            }
+
+            if (typeof listener !== "function") {
+                throw new Error("Only functions may be used as listeners!");
             }
 
             event = event || '*';
