@@ -214,6 +214,21 @@ define("MO5.Map", function (CoreObject, Exception) {
         
         return clone;
     };
+    
+    Map.prototype.addMap = function (otherMap) {
+        
+        var self = this;
+        
+        otherMap.forEach(function (item, key) {
+            self.set(key, item);
+        });
+        
+        return this;
+    };
+    
+    Map.prototype.join = function (otherMap) {
+        return this.clone().addMap(otherMap);
+    };
  
     return Map;
     
