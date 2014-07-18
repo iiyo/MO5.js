@@ -214,7 +214,7 @@
             var keys = [];
 
             this.forEach(function (item, key) {
-                keys.push(revokeKey(key));
+                keys.push(key);
             });
 
             return keys;
@@ -249,7 +249,7 @@
             var clone = new Map();
 
             this.forEach(function (item, key) {
-                clone.set(revokeKey(key), item);
+                clone.set(key, item);
             });
 
             return clone;
