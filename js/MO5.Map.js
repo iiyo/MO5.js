@@ -233,6 +233,17 @@
             
             return values;
         };
+        
+        Map.prototype.toObject = function () {
+            
+            var jsObject = {};
+            
+            this.forEach(function (item, key) {
+                jsObject[key] = item;
+            });
+            
+            return jsObject;
+        };
 
         Map.prototype.clone = function () {
             var clone = new Map();
