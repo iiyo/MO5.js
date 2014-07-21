@@ -68,9 +68,7 @@
 
             CoreObject.call(this);
 
-            this.items = {};
-            this.unsubscribers = {};
-            this.count = 0;
+            this.clear();
 
             if (content) {
                 for (key in content) {
@@ -80,6 +78,12 @@
         }
 
         Map.prototype = new CoreObject();
+        
+        Map.prototype.clear = function () {
+            this.items = {};
+            this.unsubscribers = {};
+            this.count = 0;
+        };
 
         Map.prototype.length = function () {
             return this.count;
