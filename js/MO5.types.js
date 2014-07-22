@@ -1,16 +1,43 @@
-/* global MO5 */
-MO5().define("MO5.types", function () {
+/* global MO5, window, module */
 
-    var types = {};
+(function MO5typesBootstrap () {
     
-    types.isObject = function (thing) {
-        return (typeof thing === "object" && thing !== null);
-    };
+    if (typeof MO5 === "function") {
+        MO5().define("MO5.types", MO5typesModule);
+    }
+    else if (typeof window !== "undefined") {
+        window.MO5.types = MO5typesModule();
+    }
+    else {
+        module.exports = MO5typesModule();
+    }
     
-    types.isString = function (thing) {
-        return typeof thing === "string";
-    };
-    
-    return types;
+    function MO5typesModule () {
 
-});
+        var types = {};
+
+        types.isObject = function (thing) {
+            return (typeof thing === "object" && thing !== null);
+        };
+
+        types.isString = function (thing) {
+            return typeof thing === "string";
+        };
+
+        types.isArray = function (thing) {
+
+            if (Array.isArray) {
+                return Array.isArray(thing);
+            }
+            
+            if (!types.isObject(thing)) {
+                return false;
+            }
+
+            return thing instanceof Array;
+        };
+
+        return types;
+
+    }
+}());
