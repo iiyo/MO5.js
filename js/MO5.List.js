@@ -114,8 +114,20 @@
         List.prototype.at = function (i) {
             return this.items[+i];
         };
+        
+        List.prototype.values = function () {
+        
+            var values = [];
+            
+            this.forEach(function (value) {
+                values.push(value);
+            });
+            
+            return values;
+        };
 
         List.prototype.toQueue = function () {
+            
             var q = new Queue();
 
             this.items.forEach(function (item) {
