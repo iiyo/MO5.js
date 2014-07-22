@@ -37,27 +37,28 @@
 (function MO5ListBootstrap () {
 
     if (typeof MO5 === "function") {
-        MO5("MO5.CoreObject", "MO5.Queue").
+        MO5("MO5.CoreObject", "MO5.Queue", "MO5.types").
         define("MO5.List", MO5ListModule);
     }
     else if (typeof window !== "undefined") {
-        window.MO5.List = MO5ListModule(MO5.CoreObject, MO5.Queue);
+        window.MO5.List = MO5ListModule(MO5.CoreObject, MO5.Queue, MO5.types);
     }
     else {
         module.exports = MO5ListModule(
             require("./MO5.CoreObject.js"),
-            require("./MO5.Queue.js")
+            require("./MO5.Queue.js"),
+            require("./MO5.types.js")
         );
     }
     
-    function MO5ListModule (CoreObject, Queue) {
+    function MO5ListModule (CoreObject, Queue, types) {
 
-        function List () {
+        function List (items) {
             
             CoreObject.call(this);
 
             this.unsubscribers = {};
-            this.items = [];
+            this.items = types.isArray(items) ? items : [];
         }
 
         List.prototype = new CoreObject();
