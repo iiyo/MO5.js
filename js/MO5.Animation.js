@@ -41,7 +41,7 @@
         define("MO5.Animation", MO5AnimationModule);
     }
     else if (typeof window !== "undefined") {
-        window.MO5.List = MO5AnimationModule(
+        window.MO5.Animation = MO5AnimationModule(
             MO5.Exception,
             MO5.CoreObject,
             MO5.Queue,
