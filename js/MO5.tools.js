@@ -32,7 +32,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, document */
+/* global MO5, window, document, console */
 
 MO5().define("MO5.tools", function () {
     

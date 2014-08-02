@@ -32,7 +32,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, requestAnimationFrame */
+/* global MO5, requestAnimationFrame, console */
 
 MO5("MO5.Exception", "MO5.Timer", "MO5.easing").
 define("MO5.transform", function (Exception, Timer, easing) {
