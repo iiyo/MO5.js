@@ -139,7 +139,7 @@ run(function (CoreObject, Queue) {
 
 ## Project structure ##
 
-![MO5.js class diagram](https://iiyo.org/MO5.js/images/structure.jpg)
+![MO5.js class diagram](https://iiyo.org/MO5.js/images/structure.jpg?v2)
 
 
 ## License ##
