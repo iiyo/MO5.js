@@ -1,8 +1,8 @@
 # MO5.js #
 
-MO5 is a JavaScript library for building HTML5 apps. It features DOM and Canvas
-effects, control flow helpers, observable objects, animation and timing facilities
-as well as intelligent data structures and a module loader.
+MO5 is a JavaScript library for building HTML5 apps. It features control flow helpers, 
+observable objects, animation and timing facilities as well as intelligent data 
+structures and a module loader.
 
 MO5 makes heavy use of the EventBus, Observer and Promise patterns. All important
 objects are derived from MO5.CoreObject, which means they are observable and destroyable.
@@ -11,8 +11,9 @@ MO5's internal containers recognize when objects contained within them get destr
 and remove all references they own automatically so that the garbage collector can
 do its work.
 
-The library previously was a part of the WebStory Engine project. It has since been
-extracted and is now undergoing a major rewrite to make it more robust and versatile.
+Most modules work in the browser using the MO5 module loader or making them available under
+the "MO5" namespace object if the module loader is not available. In node.js, the default
+module system with require and exports is used instead.
 
 
 ## Usage ##
