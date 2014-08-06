@@ -144,6 +144,19 @@
         List.prototype.forEach = function (fn) {
             this.items.forEach(fn);
         };
+        
+        List.prototype.find = function (fn) {
+            
+            var i, numberOfItems = this.items.length;
+            
+            for (i = 0; i < numberOfItems; i += 1) {
+                if (fn(this.items[i])) {
+                    return this.items[i];
+                }
+            }
+            
+            return undefined;
+        };
 
         return List;
 
