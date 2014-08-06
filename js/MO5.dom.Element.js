@@ -32,7 +32,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, document */
+/* global MO5, document, console */
 
 MO5("MO5.CoreObject", "MO5.transform", "MO5.TimerWatcher", "MO5.dom.effects.typewriter").
 define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewriter) {
@@ -162,6 +162,8 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewri
         }
         catch (e) {}
     };
+    
+    Element.prototype.show = Element.prototype.display;
 
     Element.prototype.hide = function () {
         
@@ -179,7 +181,61 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewri
         typewriter(this.element, args);
     };
     
+    Element.prototype.addCssClass = function (classToAdd) {
+        
+        var classes;
+        
+        if (this.element.classList) {
+            this.element.classList.add(classToAdd);
+            return this;
+        }
+        
+        classes = this.getCssClasses();
+        
+        if (!contains(classes, classToAdd)) {
+            classes.push(classToAdd);
+            this.element.setAttribute("class", classes.join(" "));
+        }
+        
+        return this;
+    };
+    
+    Element.prototype.removeCssClass = function (classToRemove) {
+        
+        var classes;
+        
+        if (this.element.classList) {
+            this.element.classList.remove(classToRemove);
+        }
+        
+        classes = this.getCssClasses();
+        
+        if (contains(classes, classToRemove)) {
+            this.element.setAttribute("class", classes.filter(function (item) {
+                return item !== classToRemove;
+            }).join(" "));
+        }
+        
+        return this;
+    };
+    
+    Element.prototype.getCssClasses = function () {
+        return (this.element.getAttribute("class") || "").split(" ");
+    };
+    
+    Element.prototype.hasCssClass = function (classToCheckFor) {
+        return this.element.classList ?
+            this.element.classList.contains(classToCheckFor) :
+            contains(this.getCssClasses(), classToCheckFor);
+    };
+    
+    Element.prototype.clearCssClasses = function () {
+        this.element.setAttribute("class", "");
+        return this;
+    };
+    
     Element.prototype.destroy = function () {
+        
         try {
             this.element.parentNode.removeChild(this.element);
         }
@@ -225,6 +281,10 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewri
                 }
             }(domElement[key], key));
         }
+    }
+    
+    function contains (array, item) {
+        return array.indexOf(item) !== -1;
     }
     
     return Element;
