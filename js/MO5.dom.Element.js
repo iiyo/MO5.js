@@ -234,6 +234,11 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewri
         return this;
     };
     
+    Element.prototype.setCssId = function (cssId) {
+        this.element.setAttribute("id", cssId);
+        return this;
+    };
+    
     Element.prototype.destroy = function () {
         
         try {
