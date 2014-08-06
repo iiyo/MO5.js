@@ -115,6 +115,10 @@
             return this.items[+i];
         };
         
+        List.prototype.indexOf = function (item) {
+            return this.items.indexOf(item);
+        };
+        
         List.prototype.values = function () {
         
             var values = [];
