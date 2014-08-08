@@ -34,8 +34,10 @@
 
 /* global MO5, document, console */
 
-MO5("MO5.CoreObject", "MO5.transform", "MO5.TimerWatcher", "MO5.dom.effects.typewriter").
-define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewriter) {
+MO5("MO5.CoreObject", "MO5.transform", "MO5.TimerWatcher", "MO5.dom.effects.typewriter",
+        "MO5.types", "MO5.Point", "MO5.Size").
+define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
+        typewriter, types, Point, Size) {
     
     function Element (args) {
         
@@ -110,6 +112,54 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewri
             args
         );
     };
+    
+    Element.prototype.opacity = function (value) {
+        
+        if (typeof value === "number") {
+            this.element.style.opacity = value;
+        }
+        
+        return this.element.style.opacity;
+    };
+    
+    Element.prototype.position = function (point) {
+        
+        if (types.isObject(point)) {
+            this.element.style.left = "" + (+point.x) + "px";
+            this.element.style.top = "" + (+point.y) + "px";
+        }
+        
+        return new Point(this.element.offsetLeft, this.element.offsetTop);
+        
+    };
+    
+    Element.prototype.size = function (size) {
+        
+        if (types.isObject(size)) {
+            this.element.style.width = "" + size.width + "px";
+            this.element.style.height = "" + size.height + "px";
+        }
+        
+        return new Size(this.element.offsetWidth, this.element.offsetHeight);
+    };
+    
+    Element.prototype.width = function (width) {
+        
+        if (types.isNumber(width)) {
+            this.element.style.width = "" + width + "px";
+        }
+        
+        return this.element.offsetWidth;
+    };
+    
+    Element.prototype.height = function (height) {
+        
+        if (types.isNumber(height)) {
+            this.element.style.height = "" + height + "px";
+        }
+        
+        return this.element.offsetHeight;
+    };
 
     Element.prototype.moveTo = function (x, y, args) {
         
@@ -161,6 +211,8 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewri
             parent.appendChild(this.element);
         }
         catch (e) {}
+        
+        this.element.style.visibility = "";
     };
     
     Element.prototype.show = Element.prototype.display;
@@ -174,6 +226,8 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher, typewri
             parent.removeChild(this.element);
         }
         catch (e) {}
+        
+        this.element.style.visibility = "hidden";
     };
     
     Element.prototype.typewriter = function (args) {
