@@ -23,6 +23,10 @@
         types.isString = function (thing) {
             return typeof thing === "string";
         };
+        
+        types.isNumber = function (thing) {
+            return typeof thing === "number";
+        };
 
         types.isArray = function (thing) {
 
