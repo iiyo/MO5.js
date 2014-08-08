@@ -101,13 +101,8 @@
         TimerWatcher.prototype.constructor = TimerWatcher;
 
         TimerWatcher.prototype.addTimer = function (timer) {
+            
             var fn, self = this;
-
-            if (!(timer instanceof Timer) && !(timer instanceof TimerWatcher)) {
-                fail(new Exception(
-                    "Parameter 1 is expected to be of type MO5.Timer or MO5.TimerWatcher."));
-                return this;
-            }
 
             if (this.timers[+timer]) {
                 fail(new Exception(
