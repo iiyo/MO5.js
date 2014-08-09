@@ -64,6 +64,28 @@ if (typeof window !== "undefined") {
     };
 }());
 
+
+if (typeof console === "undefined") {
+    this.console = {};
+}
+
+if (!console.log) {
+    console.log = function () {};
+}
+
+if (!console.dir) {
+    console.dir = console.log;
+}
+
+if (!console.error) {
+    console.error = console.log;
+}
+
+if (!console.warn) {
+    console.warn = console.log;
+}
+
+
 var MO5 = (function () {
         
     var modules = {}, loadedScripts = {};
