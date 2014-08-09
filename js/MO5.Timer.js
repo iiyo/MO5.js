@@ -37,22 +37,22 @@
 (function MO5TimerBootstrap () {
     
     if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Result").
+        MO5("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Promise").
         define("MO5.Timer", MO5TimerModule);
     }
     else if (typeof window !== "undefined") {
-        window.MO5.Timer = MO5TimerModule(MO5.Exception, MO5.CoreObject, MO5.fail, MO5.Result);
+        window.MO5.Timer = MO5TimerModule(MO5.Exception, MO5.CoreObject, MO5.fail, MO5.Promise);
     }
     else {
         module.exports = MO5TimerModule(
             require("./MO5.Exception.js"),
             require("./MO5.CoreObject.js"),
             require("./MO5.fail.js"),
-            require("./MO5.Result.js")
+            require("./MO5.Promise.js")
         );
     }
     
-    function MO5TimerModule (Exception, CoreObject, fail, Result) {
+    function MO5TimerModule (Exception, CoreObject, fail, Promise) {
 
         function TimerError (msg) {
             Exception.call(this);
@@ -179,24 +179,36 @@
 
         Timer.prototype.promise = function () {
 
-            var result = new Result(), self = this;
+            var promise = new Promise(), self = this;
 
             this.once(
-                function () { if (!result.destroyed && result.isPending()) { result.success(self); } }, 
+                function () {
+                    if (!promise.destroyed && promise.isPending()) {
+                        promise.resolve(self);
+                    }
+                }, 
                 "stopped"
             );
 
             this.once(
-                function () { if (!result.destroyed && result.isPending()) { result.failure(self); } },
+                function () {
+                    if (!promise.destroyed && promise.isPending()) {
+                        promise.reject(self);
+                    }
+                },
                 "canceled"
             );
 
             this.once(
-                function () { if (!result.destroyed && result.isPending()) { result.failure(self); } },
+                function () {
+                    if (!promise.destroyed && promise.isPending()) {
+                        promise.reject(self);
+                    }
+                },
                 "destroyed"
             );
 
-            return result.promise;
+            return promise;
         };
 
         return Timer;

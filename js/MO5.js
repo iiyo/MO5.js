@@ -64,7 +64,6 @@ if (typeof window !== "undefined") {
     };
 }());
 
-
 var MO5 = (function () {
         
     var modules = {}, loadedScripts = {};
@@ -373,7 +372,8 @@ var MO5 = (function () {
         "MO5.List": MO5.path + "MO5.List.js",
         "MO5.Queue": MO5.path + "MO5.Queue.js",
         "MO5.Map": MO5.path + "MO5.Map.js",
-        "MO5.Result": MO5.path + "MO5.Result.js",
+        "MO5.Result": MO5.path + "MO5.Result.js", // deprecated - use MO5.Promise instead!
+        "MO5.Promise": MO5.path + "MO5.Promise.js",
         "MO5.Timer": MO5.path + "MO5.Timer.js",
         "MO5.TimerWatcher": MO5.path + "MO5.TimerWatcher.js",
         "MO5.easing": MO5.path + "MO5.easing.js",
