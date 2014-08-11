@@ -183,27 +183,21 @@
 
             this.once(
                 function () {
-                    if (!promise.destroyed && promise.isPending()) {
-                        promise.resolve(self);
-                    }
+                    promise.resolve(self);
                 }, 
                 "stopped"
             );
 
             this.once(
                 function () {
-                    if (!promise.destroyed && promise.isPending()) {
-                        promise.reject(self);
-                    }
+                    promise.reject(self);
                 },
                 "canceled"
             );
 
             this.once(
                 function () {
-                    if (!promise.destroyed && promise.isPending()) {
-                        promise.reject(self);
-                    }
+                    promise.reject(self);
                 },
                 "destroyed"
             );
