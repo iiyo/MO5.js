@@ -87,16 +87,22 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         
         var element = this.element;
         
+        if (this._lastFadeTimer && this._lastFadeTimer.isRunning()) {
+            this._lastFadeTimer.cancel();
+        }
+        
         this.show();
         
-        return transform(
+        this._lastFadeTimer = transform(
             function (v) {
                 element.style.opacity = v;
             },
-            0,
+            parseInt(element.style.opacity, 10) || 0,
             1,
             args
         );
+        
+        return this._lastFadeTimer;
     };
 
     Element.prototype.fadeOut = function (args) {
@@ -104,18 +110,23 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         args = args || {};
         
         var element = this.element;
-        var timer = transform(
+        
+        if (this._lastFadeTimer && this._lastFadeTimer.isRunning()) {
+            this._lastFadeTimer.cancel();
+        }
+        
+        this._lastFadeTimer = transform(
             function (v) {
                 element.style.opacity = v;
             },
-            1,
+            parseInt(element.style.opacity, 10) || 1,
             0,
             args
         );
         
-        timer.once("stopped", this.hide.bind(this));
+        this._lastFadeTimer.once("stopped", this.hide.bind(this));
         
-        return timer;
+        return this._lastFadeTimer;
     };
     
     Element.prototype.opacity = function (value) {
