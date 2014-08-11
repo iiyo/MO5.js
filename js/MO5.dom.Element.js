@@ -87,6 +87,8 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         
         var element = this.element;
         
+        this.show();
+        
         return transform(
             function (v) {
                 element.style.opacity = v;
@@ -102,8 +104,7 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         args = args || {};
         
         var element = this.element;
-        
-        return transform(
+        var timer = transform(
             function (v) {
                 element.style.opacity = v;
             },
@@ -111,6 +112,10 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
             0,
             args
         );
+        
+        timer.once("stopped", this.hide.bind(this));
+        
+        return timer;
     };
     
     Element.prototype.opacity = function (value) {
@@ -203,30 +208,12 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
     };
 
     Element.prototype.display = function () {
-        
-        var parent;
-        
-        try {
-            parent = this.parent || document.body;
-            parent.appendChild(this.element);
-        }
-        catch (e) {}
-        
         this.element.style.visibility = "";
     };
     
     Element.prototype.show = Element.prototype.display;
 
     Element.prototype.hide = function () {
-        
-        var parent;
-        
-        try {
-            parent = this.parent || document.body;
-            parent.removeChild(this.element);
-        }
-        catch (e) {}
-        
         this.element.style.visibility = "hidden";
     };
     
