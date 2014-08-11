@@ -87,7 +87,9 @@ if (!console.warn) {
 
 
 var MO5 = (function () {
-        
+    
+    "use strict";
+    
     var modules = {}, loadedScripts = {};
     
     /**
@@ -247,6 +249,10 @@ var MO5 = (function () {
         dependencies = Module.gatherDependencies(this.dependencies);
         content = this.callback.apply(undefined, dependencies);
         
+        if (typeof content === "undefined") {
+            throw new Error("Module definition callback returned undefined!");
+        }
+        
         this.content = content;
         this.state = Module.STATE_READY;
         
@@ -292,7 +298,9 @@ var MO5 = (function () {
                         null, ajaxResourceSuccessFn, ajaxResourceSuccessFn);
                 }
                 else {
-                    loadModule(moduleName, loadModuleSuccessFn);
+                    loadModule(moduleName, loadModuleSuccessFn, function (e) {
+                        console.error(e);
+                    });
                 }
                 
                 function ajaxResourceSuccessFn (request) {
@@ -301,12 +309,13 @@ var MO5 = (function () {
                 }
                 
                 function loadModuleSuccessFn (module) {
-            
+                    
                     modulesLoaded += 1;
                     
                     dependencies[currentOffset] = module;
                     
                     if (modulesLoaded === moduleNames.length) {
+                        
                         done = true;
                         
                         defineCallbacks.forEach(function (callback) {
@@ -402,6 +411,7 @@ var MO5 = (function () {
         "MO5.transform": MO5.path + "MO5.transform.js",
         "MO5.tools": MO5.path + "MO5.tools.js",
         "MO5.Point": MO5.path + "MO5.Point.js",
+        "MO5.Size": MO5.path + "MO5.Size.js",
         "MO5.Animation": MO5.path + "MO5.Animation.js",
         "MO5.dom.effects.typewriter": MO5.path + "MO5.dom.effects.typewriter.js",
         "MO5.dom.Element": MO5.path + "MO5.dom.Element.js",
@@ -414,15 +424,6 @@ var MO5 = (function () {
         "MO5.canvas.Rain": MO5.path + "MO5.canvas.Rain.js",
         "MO5.canvas.Rectangle": MO5.path + "MO5.canvas.Rectangle.js",
         "MO5.canvas.TextBox": MO5.path + "MO5.canvas.TextBox.js",
-        "MO5.script.Tokenizer": MO5.path + "MO5.script.Tokenizer.js",
-        "MO5.script.Parser": MO5.path + "MO5.script.Parser.js",
-        "MO5.script.Context": MO5.path + "MO5.script.Context.js",
-        "MO5.script.SpecialFormsContainer": MO5.path + "MO5.script.SpecialFormsContainer.js",
-        "MO5.script.GlobalScope": MO5.path + "MO5.script.GlobalScope.js",
-        "MO5.script.Interpreter": MO5.path + "MO5.script.Interpreter.js",
-        "MO5.script.Pair": MO5.path + "MO5.script.Pair.js",
-        "MO5.script.Printer": MO5.path + "MO5.script.Printer.js",
-        "MO5.script.errors": MO5.path + "MO5.script.errors.js",
         "MO5.types": MO5.path + "MO5.types.js"
     };
     
