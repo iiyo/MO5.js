@@ -1,4 +1,4 @@
-/* global global, window, process, document, MO5, Promise */
+/* global global, window, process, document, MO5, Promise, module */
 
 (function() {
 var define, requireModule, require, requirejs;
@@ -686,34 +686,49 @@ requireModule('promise/polyfill').polyfill();
 }());
 
 
-MO5().define("MO5.Promise", function () {
+
+(function MO5PromiseBootstrap () {
     
-    function MO5Promise (fn) {
-        
-        var success, failure, promise = new Promise(function (resolve, reject) {
-            
-            success = function (value) {
-                resolve(value);
-                return promise;
-            };
-            
-            failure = function (reason) {
-                reject(reason);
-                return promise;
-            };
-        });
-        
-        promise.success = success;
-        promise.failure = failure;
-        promise.resolve = success;
-        promise.reject = failure;
-        
-        if (typeof fn === "function") {
-            fn(success, failure);
-        }
-        
-        return promise;
+    if (typeof MO5 === "function") {
+        MO5().define("MO5.Promise", MO5PromiseModule);
+    }
+    else if (typeof window !== "undefined") {
+        window.MO5.Promise = MO5PromiseModule();
+    }
+    else {
+        module.exports = MO5PromiseModule();
     }
     
-    return MO5Promise;
-});
+    function MO5PromiseModule () {
+        
+        function MO5Promise (fn) {
+            
+            var success, failure, promise = new Promise(function (resolve, reject) {
+                
+                success = function (value) {
+                    resolve(value);
+                    return promise;
+                };
+                
+                failure = function (reason) {
+                    reject(reason);
+                    return promise;
+                };
+            });
+            
+            promise.success = success;
+            promise.failure = failure;
+            promise.resolve = success;
+            promise.reject = failure;
+            
+            if (typeof fn === "function") {
+                fn(success, failure);
+            }
+            
+            return promise;
+        }
+        
+        return MO5Promise;
+    }
+    
+}());
