@@ -262,6 +262,12 @@
             return result;
         };
         
+        Map.prototype.every = function (fn) {
+            return this.reduce(function (last, item, key, all) {
+                return last && fn(item, key, all);
+            }, true);
+        };
+        
         Map.prototype.keys = function () {
             
             var keys = [];

@@ -140,7 +140,7 @@
 
             return q;
         };
-
+        
         List.prototype.forEach = function (fn) {
             this.items.forEach(fn);
         };
@@ -155,6 +155,10 @@
         
         List.prototype.reduce = function (fn) {
             return this.items.reduce(fn);
+        };
+        
+        List.prototype.every = function (fn) {
+            return this.items.every(fn);
         };
         
         List.prototype.find = function (fn) {
