@@ -225,15 +225,29 @@
             
             return matches;
         };
-
+        
+        Map.prototype.find = function (fn) {
+            
+            var value, valueFound = false;
+            
+            this.forEach(function (item, key, all) {
+                if (!valueFound && fn(item, key, all)) {
+                    value = item;
+                    valueFound = true;
+                }
+            });
+            
+            return value;
+        };
+        
         Map.prototype.keys = function () {
-
+            
             var keys = [];
-
+            
             this.forEach(function (item, key) {
                 keys.push(key);
             });
-
+            
             return keys;
         };
         
