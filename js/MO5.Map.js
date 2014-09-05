@@ -212,6 +212,19 @@
 
             return this;
         };
+        
+        Map.prototype.filter = function (fn) {
+            
+            var matches = new Map();
+            
+            this.forEach(function (item, key, all) {
+                if (fn(item, key, all)) {
+                    matches.set(key, item);
+                }
+            });
+            
+            return matches;
+        };
 
         Map.prototype.keys = function () {
 
