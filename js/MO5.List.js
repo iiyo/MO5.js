@@ -145,6 +145,10 @@
             this.items.forEach(fn);
         };
         
+        List.prototype.filter = function (fn) {
+            return this.items.filter(fn);
+        };
+        
         List.prototype.find = function (fn) {
             
             var i, numberOfItems = this.items.length;
