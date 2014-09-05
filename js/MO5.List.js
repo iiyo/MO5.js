@@ -161,6 +161,10 @@
             return this.items.every(fn);
         };
         
+        List.prototype.some = function (fn) {
+            return this.items.some(fn);
+        };
+        
         List.prototype.find = function (fn) {
             
             var i, numberOfItems = this.items.length;

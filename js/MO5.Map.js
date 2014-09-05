@@ -268,6 +268,19 @@
             }, true);
         };
         
+        Map.prototype.some = function (fn) {
+            
+            var matchFound = false;
+            
+            this.forEach(function (item, key, all) {
+                if (!matchFound && fn(item, key, all)) {
+                    matchFound = true;
+                }
+            });
+            
+            return matchFound;
+        };
+        
         Map.prototype.keys = function () {
             
             var keys = [];
