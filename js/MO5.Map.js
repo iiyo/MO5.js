@@ -240,6 +240,17 @@
             return value;
         };
         
+        Map.prototype.map = function (fn) {
+            
+            var mapped = new Map();
+            
+            this.forEach(function (item, key, all) {
+                mapped.set(key, fn(item, key, all));
+            });
+            
+            return mapped;
+        };
+        
         Map.prototype.keys = function () {
             
             var keys = [];

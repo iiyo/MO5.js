@@ -149,6 +149,10 @@
             return this.items.filter(fn);
         };
         
+        List.prototype.map = function (fn) {
+            return this.items.map(fn);
+        };
+        
         List.prototype.find = function (fn) {
             
             var i, numberOfItems = this.items.length;
