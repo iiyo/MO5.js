@@ -251,6 +251,17 @@
             return mapped;
         };
         
+        Map.prototype.reduce = function (fn, initialValue) {
+            
+            var result = initialValue;
+            
+            this.forEach(function (item, key, all) {
+                result = fn(result, item, key, all);
+            });
+            
+            return result;
+        };
+        
         Map.prototype.keys = function () {
             
             var keys = [];

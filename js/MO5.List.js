@@ -153,6 +153,10 @@
             return this.items.map(fn);
         };
         
+        List.prototype.reduce = function (fn) {
+            return this.items.reduce(fn);
+        };
+        
         List.prototype.find = function (fn) {
             
             var i, numberOfItems = this.items.length;
