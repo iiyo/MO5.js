@@ -177,8 +177,20 @@
             
             return undefined;
         };
-
+        
+        /**
+         * Returns a list which is this list with all the items from another list
+         * appended to it.
+         */
+        List.prototype.combine = function (otherList) {
+            return new List(this.items.slice().concat(otherList.items));
+        };
+        
+        List.prototype.clone = function () {
+            return new List(this.items.slice());
+        };
+        
         return List;
-
+        
     }
 }());
