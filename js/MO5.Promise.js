@@ -728,6 +728,11 @@ requireModule('promise/polyfill').polyfill();
             return promise;
         }
         
+        MO5Promise.resolve = Promise.resolve;
+        MO5Promise.reject = Promise.reject;
+        MO5Promise.all = Promise.all;
+        MO5Promise.race = Promise.race;
+        
         return MO5Promise;
     }
     
