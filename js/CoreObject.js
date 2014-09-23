@@ -45,9 +45,9 @@
     }
     else {
         module.exports = MO5CoreObjectModule(
-            require("./MO5.Exception.js"),
-            require("./MO5.fail.js"),
-            require("./MO5.EventBus.js")
+            require("./Exception.js"),
+            require("./fail.js"),
+            require("./EventBus.js")
         );
     }
 

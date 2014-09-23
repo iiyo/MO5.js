@@ -45,9 +45,9 @@
     }
     else {
         module.exports = MO5ListModule(
-            require("./MO5.CoreObject.js"),
-            require("./MO5.Queue.js"),
-            require("./MO5.types.js")
+            require("./CoreObject.js"),
+            require("./Queue.js"),
+            require("./types.js")
         );
     }
     

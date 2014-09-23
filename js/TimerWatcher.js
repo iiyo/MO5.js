@@ -50,10 +50,10 @@
     }
     else {
         module.exports = MO5TimerWatcherModule(
-            require("./MO5.Exception.js"),
-            require("./MO5.CoreObject.js"),
-            require("./MO5.fail.js"),
-            require("./MO5.Timer.js")
+            require("./Exception.js"),
+            require("./CoreObject.js"),
+            require("./fail.js"),
+            require("./Timer.js")
         );
     }
     

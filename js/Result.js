@@ -52,10 +52,10 @@
     }
     else {
         module.exports = MO5ResultModule(
-            require("./MO5.CoreObject.js"),
-            require("./MO5.Queue.js"),
-            require("./MO5.Exception.js"),
-            require("./MO5.fail.js")
+            require("./CoreObject.js"),
+            require("./Queue.js"),
+            require("./Exception.js"),
+            require("./fail.js")
         );
     }
     

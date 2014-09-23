@@ -51,11 +51,11 @@
     }
     else {
         module.exports = MO5AnimationModule(
-            require("./MO5.Exception.js"),
-            require("./MO5.CoreObject.js"),
-            require("./MO5.Queue.js"),
-            require("./MO5.Timer.js"),
-            require("./MO5.TimerWatcher.js")
+            require("./Exception.js"),
+            require("./CoreObject.js"),
+            require("./Queue.js"),
+            require("./Timer.js"),
+            require("./TimerWatcher.js")
         );
     }
     

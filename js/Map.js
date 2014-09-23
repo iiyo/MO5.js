@@ -45,8 +45,8 @@
     }
     else {
         module.exports = MO5MapModule(
-            require("./MO5.CoreObject.js"),
-            require("./MO5.Exception.js")
+            require("./CoreObject.js"),
+            require("./Exception.js")
         );
     }
     

@@ -45,8 +45,8 @@
     }
     else {
         module.exports = MO5QueueModule(
-            require("./MO5.Exception.js"),
-            require("./MO5.CoreObject.js")
+            require("./Exception.js"),
+            require("./CoreObject.js")
         );
     }
     
