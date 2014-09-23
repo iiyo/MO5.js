@@ -1,0 +1,20 @@
+{
+    "name": "MO5",
+    "version": "0.1.0-alpha.4",
+    "description": "Library for writing modular JavaScript apps.",
+    "main": "index.js",
+    "keywords": [
+        "MO5",
+        "modular",
+        "data-structures",
+        "timing",
+        "promises",
+        "module-loader"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/iiyo/MO5.js.git"
+    },
+    "author": "Jonathan Steinbeck",
+    "license": "New BSD"
+}
