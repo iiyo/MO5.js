@@ -2,7 +2,6 @@
     "name": "MO5",
     "version": "0.1.0-alpha.4",
     "description": "Library for writing modular JavaScript apps.",
-    "main": "index.js",
     "keywords": [
         "MO5",
         "modular",
