@@ -160,6 +160,19 @@
 
             return this.items[key];
         };
+        
+        /**
+         * The same as .get(), but throws when the key doesn't exist.
+         * This can be useful if you want to use a map as some sort of registry.
+         */
+        Map.prototype.require = function (key) {
+            
+            if (!this.has(key)) {
+                throw new Error("Required key '" + key + "' does not exist.");
+            }
+            
+            return this.get(key);
+        };
 
         Map.prototype.remove = function (k) {
 
