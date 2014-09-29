@@ -416,6 +416,8 @@ var MO5 = (function () {
         "MO5.dom.effects.typewriter": MO5.path + "dom.effects.typewriter.js",
         "MO5.dom.Element": MO5.path + "dom.Element.js",
         "MO5.dom.escape": MO5.path + "dom.escape.js",
+        "MO5.globals.document": MO5.path + "globals.document.js",
+        "MO5.globals.window": MO5.path + "globals.window.js",
         "MO5.types": MO5.path + "types.js"
     };
     
