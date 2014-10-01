@@ -64,24 +64,35 @@
          * @event destroyed()
          */
         function CoreObject (args) {
-
+            
             args = args || {};
             args.bus = args.bus || {};
-
+            
             highestId += 1;
-
-            this.id = highestId;
+            
+            if (Object.defineProperty) {
+                Object.defineProperty(this, "id", {
+                    value: highestId,
+                    configurable: false,
+                    enumerable: false,
+                    writable: false
+                });
+            }
+            else {
+                this.id = highestId;
+            }
+            
             this.destroyed = false;
-
+            
             EventBus.inject(this, args.bus);
-
+            
             flags[this.id] = {};
         }
-
+        
         CoreObject.prototype.setFlag = function (key) {
-
+            
             var internalKey = externalKeyToInternalKey(key);
-
+            
             if (!flags[this.id]) {
                 return;
             }
