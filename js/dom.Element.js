@@ -321,6 +321,11 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
     function wrapElement (element, domElement) {
         for (var key in domElement) {
             (function (currentProperty, key) {
+                
+                if (key === "id") {
+                    return;
+                }
+                
                 if (typeof currentProperty === "function") {
                     element[key] = function () {
                         return domElement[key].apply(domElement, arguments);
@@ -328,7 +333,8 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
                 }
                 else {
                     element[key] = function (content) {
-                        if (content) {
+                        
+                        if (arguments.length) {
                             domElement[key] = content;
                             return element;
                         }
