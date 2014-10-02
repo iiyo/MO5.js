@@ -66,27 +66,28 @@
         List.prototype.length = function () {
             return this.items.length;
         };
-
+        
         List.prototype.append = function (value) {
-
+            
             var self = this;
-
+            
             function listener () {
+                
                 var i, len;
-
+                
                 for (i = 0, len = self.items.length; i < len; i += 1) {
                     if (self.items[i] === value) {
                         self.items.splice(i, 1);
                     }
                 }
-
-                delete self.unsubscribers[+value];
+                
+                delete self.unsubscribers[value.id];
             }
-
+            
             function unsubscribe () {
                 value.unsubscribe(listener, "destroyed");
             }
-
+            
             if (CoreObject.isCoreObject(value)) {
                 this.unsubscribers[value.id] = unsubscribe;
                 value.subscribe(listener, "destroyed");
