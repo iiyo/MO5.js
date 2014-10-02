@@ -89,6 +89,14 @@
             flags[this.id] = {};
         }
         
+        CoreObject.hasId = function (obj) {
+            return typeof obj === "object" && obj !== null && typeof obj.id === "number";
+        };
+        
+        CoreObject.isCoreObject = function (obj) {
+            return obj instanceof CoreObject;
+        };
+        
         CoreObject.prototype.setFlag = function (key) {
             
             var internalKey = externalKeyToInternalKey(key);
