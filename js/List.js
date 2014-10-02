@@ -87,8 +87,8 @@
                 value.unsubscribe(listener, "destroyed");
             }
 
-            if (value instanceof CoreObject) {
-                this.unsubscribers[+value] = unsubscribe;
+            if (CoreObject.isCoreObject(value)) {
+                this.unsubscribers[value.id] = unsubscribe;
                 value.subscribe(listener, "destroyed");
             }
 
@@ -101,7 +101,7 @@
 
             var val = this.items[i];
 
-            if (val instanceof CoreObject) {
+            if (CoreObject.isCoreObject(val)) {
                 this.unsubscribers[val.id]();
                 delete this.unsubscribers[val.id];
             }
