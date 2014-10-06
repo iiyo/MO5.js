@@ -65,6 +65,13 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         "appendChild"
     ];
     
+    /**
+     * Creates an Element instance for a DOMElement.
+     */
+    Element.fromDomElement = function (domElement) {
+        return new Element({element: domElement, nodeType: domElement.nodeName});
+    };
+    
     Element.prototype = new CoreObject();
     Element.prototype.constructor = Element;
     
