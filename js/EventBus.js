@@ -196,8 +196,7 @@
                 throw new Error("Event names can only be strings or numbers! event: ", event);
             }
 
-            event = event || "*";
-            data = data || null;
+            event = arguments.length ? event : "*";
             flowType = (typeof async !== "undefined" && async === false) ? EventBus.FLOW_TYPE_SYNCHRONOUS : this.defaults.flowType;
 
             self = this;
@@ -308,24 +307,19 @@
 
             var squid = new EventBus(args);
 
-            obj.subscribe = function (listener, event) { 
-                event = event || "*"; 
+            obj.subscribe = function (listener, event) {
                 squid.subscribe(listener, event); 
             };
 
             obj.unsubscribe = function (listener, event) {
-                event = event || "*"; 
                 squid.unsubscribe(listener, event); 
             };
 
             obj.once = function (listener, event) {
-                event = event || "*"; 
                 squid.once(listener, event); 
             };
 
             obj.trigger = function (event, data, async) {
-                event = event || "*";
-                data = data || null;
                 async = (typeof async !== "undefined" && async === false) ? false : true;
                 squid.trigger(event, data, async);
             };
