@@ -733,6 +733,15 @@ requireModule('promise/polyfill').polyfill();
         MO5Promise.all = Promise.all;
         MO5Promise.race = Promise.race;
         
+        MO5Promise.consolify = function (promise) {
+            promise.
+            then(console.log.bind(console)).
+            catch(function (error) {
+                console.error(error);
+                console.log(error.stack);
+            });
+        };
+        
         return MO5Promise;
     }
     
