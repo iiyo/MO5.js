@@ -147,12 +147,21 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
     
     Element.prototype.position = function (point) {
         
+        var element = this.element, rect = {};
+        
         if (types.isObject(point)) {
-            this.element.style.left = "" + (+point.x) + "px";
-            this.element.style.top = "" + (+point.y) + "px";
+            element.style.left = "" + (+point.x) + "px";
+            element.style.top = "" + (+point.y) + "px";
         }
         
-        return new Point(this.element.offsetLeft, this.element.offsetTop);
+        rect.left = element.offsetLeft;
+        rect.top = element.offsetTop;
+
+        if (element.getBoundingClientRect) {
+            rect = element.getBoundingClientRect();
+        }
+        
+        return new Point(rect.left, rect.top);
         
     };
     
