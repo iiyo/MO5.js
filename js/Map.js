@@ -99,7 +99,7 @@
             }
 
             if (!k) {
-                throw new Exception("MO5.Map keys cannot be falsy.");
+                throw new Error("MO5.Map keys cannot be falsy.");
             }
 
             if (this.has(key)) {
@@ -109,7 +109,7 @@
             if (value && value instanceof CoreObject) {
 
                 if (value.destroyed) {
-                    throw new Exception("Trying to add an MO5.Object that has " +
+                    throw new Error("Trying to add an MO5.Object that has " +
                         "already been destroyed.");
                 }
 
@@ -119,7 +119,7 @@
             if (k instanceof CoreObject) {
 
                 if (k.destroyed) {
-                    throw new Exception("Trying to use an MO5.Object as key that " +
+                    throw new Error("Trying to use an MO5.Object as key that " +
                         "has already been destroyed.");
                 }
 
@@ -179,7 +179,7 @@
             var key = makeKey(k);
 
             if (!this.has(k)) {
-                throw new Exception("Trying to remove an unknown key from an MO5.Map.");
+                throw new Error("Trying to remove an unknown key from an MO5.Map.");
             }
 
             if (this.unsubscribers.hasOwnProperty(key)) {
@@ -216,7 +216,7 @@
         Map.prototype.forEach = function (fn) {
 
             if (!fn || typeof fn !== "function") {
-                throw new Exception("Parameter 1 is expected to be of type function.");
+                throw new Error("Parameter 1 is expected to be of type function.");
             }
 
             for (var key in this.items) {
