@@ -27,6 +27,10 @@
         types.isNumber = function (thing) {
             return typeof thing === "number";
         };
+        
+        types.isFunction = function (thing) {
+            return typeof thing === "function";
+        };
 
         types.isArray = function (thing) {
 
@@ -39,6 +43,10 @@
             }
 
             return thing instanceof Array;
+        };
+        
+        types.hasForEach = function (thing) {
+            return types.isObject(thing) && types.isFunction(thing.forEach);
         };
 
         return types;
