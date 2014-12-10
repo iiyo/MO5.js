@@ -191,7 +191,9 @@
             
             var values = [];
             
-            this.forEach(values.push.bind(values));
+            this.forEach(function (item) {
+                values.push(item);
+            });
             
             return values;
         };
@@ -208,6 +210,46 @@
         Set.prototype.addMany = function (items) {
             items.forEach(this.add.bind(this));
             return this;
+        };
+        
+        Set.prototype.intersection = function (otherSet) {
+            
+            var result = new Set();
+            
+            otherSet.forEach(function (item) {
+                if (this.has(item)) {
+                    result.add(item);
+                }
+            }.bind(this));
+            
+            return result;
+        };
+        
+        Set.prototype.difference = function (otherSet) {
+            
+            var result = new Set(this.values());
+            
+            otherSet.forEach(function (item) {
+                if (result.has(item)) {
+                    result.delete(item);
+                }
+                else {
+                    result.add(item);
+                }
+            });
+            
+            return result;
+        };
+        
+        Set.prototype.size = function () {
+            
+            var length = this._items.length, key;
+            
+            for (key in this._stringItems) {
+                length += 1;
+            }
+            
+            return length;
         };
         
         return Set;
