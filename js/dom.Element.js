@@ -87,6 +87,18 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         var node = child instanceof Element ? child.element : child;
         return this.element.appendChild(node);
     };
+    
+    /**
+     * Adds a child element as the first child of this element.
+     */
+    Element.prototype.addAsFirstChild = function (child) {
+        
+        var node = child instanceof Element ? child.element : child;
+        
+        return this.element.childElementCount > 0 ?
+            this.element.insertBefore(node, this.element.childNodes[0]) :
+            this.element.appendChild(node);
+    };
 
     Element.prototype.fadeIn = function (args) {
         
