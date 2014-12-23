@@ -300,31 +300,42 @@
                 f();
             }
         };
-
+        
+        EventBus.prototype.triggerSync = function (event, data) {
+            return this.trigger(event, data, false);
+        };
+        
+        EventBus.prototype.triggerAsync = function (event, data) {
+            return this.trigger(event, data, true);
+        };
+        
         EventBus.inject = function (obj, args) {
-
+            
             args = args || {};
-
+            
             var squid = new EventBus(args);
-
+            
             obj.subscribe = function (listener, event) {
                 squid.subscribe(listener, event); 
             };
-
+            
             obj.unsubscribe = function (listener, event) {
                 squid.unsubscribe(listener, event); 
             };
-
+            
             obj.once = function (listener, event) {
                 squid.once(listener, event); 
             };
-
+            
             obj.trigger = function (event, data, async) {
                 async = (typeof async !== "undefined" && async === false) ? false : true;
                 squid.trigger(event, data, async);
             };
+            
+            obj.triggerSync = squid.triggerSync.bind(squid);
+            obj.triggerAsync = squid.triggerAsync.bind(squid);
         };
-
+        
         return EventBus;
 
     }
