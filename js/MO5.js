@@ -506,13 +506,30 @@ MO5.ajax = (function () {
     var READY_STATE_LOADING = 3;
     var READY_STATE_DONE = 4;
     
-    function ajax (method, url, data, onSuccess, onError) {
+    function ajax (method, url, data, onSuccess, onError, timeout) {
         
         var requestObject = XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
         
         requestObject.open(method, url + "?random=" + Math.random(), true);
         
+        if (timeout) {
+            
+            requestObject.timeout = timeout;
+            
+            requestObject.ontimeout = function () {
+                
+                requestObject.abort();
+                
+                if (!onError) {
+                    return;
+                }
+                
+                onError(new Error("Connection has reached the timeout of " + timeout + " ms."));
+            };
+        }
+        
         requestObject.onreadystatechange = function() {
+            
             var done, statusOk;
             
             done = requestObject.readyState === READY_STATE_DONE;
