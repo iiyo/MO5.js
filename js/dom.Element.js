@@ -159,7 +159,7 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
     
     Element.prototype.position = function (point) {
         
-        var element = this.element, rect = {};
+        var element = this.element, rect = {}, scrollLeft, scrollTop;
         
         if (types.isObject(point)) {
             element.style.left = "" + (+point.x) + "px";
@@ -168,12 +168,15 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         
         rect.left = element.offsetLeft;
         rect.top = element.offsetTop;
-
+        
         if (element.getBoundingClientRect) {
             rect = element.getBoundingClientRect();
         }
         
-        return new Point(rect.left, rect.top);
+        scrollLeft = Math.max(document.documentElement.scrollLeft, document.body.scrollLeft);
+        scrollTop = Math.max(document.documentElement.scrollTop, document.body.scrollTop);
+        
+        return new Point(scrollLeft + rect.left, scrollTop + rect.top);
         
     };
     
