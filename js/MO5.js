@@ -533,9 +533,17 @@ MO5.ajax = (function () {
             var done, statusOk;
             
             done = requestObject.readyState === READY_STATE_DONE;
-            statusOk = requestObject.status === HTTP_STATUS_OK;
             
             if (done) {
+                
+                try {
+                    statusOk = requestObject.status === HTTP_STATUS_OK;
+                }
+                catch (error) {
+                    console.error(error);
+                    statusOk = false;
+                }
+                
                 if (statusOk) {
                     onSuccess(requestObject);
                 }
