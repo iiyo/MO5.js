@@ -363,7 +363,7 @@ var MO5 = (function () {
     };
     
     MO5.defaults = {
-        fps: 30,
+        fps: 60,
         debug: true,
         canvas: {
             width: 640, // default width for canvas elements
