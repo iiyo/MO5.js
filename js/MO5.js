@@ -146,11 +146,17 @@ var MO5 = (function () {
     
     function updateModule (moduleName) {
         
-        var deps = [], depNames = dependencies[moduleName];
+        var deps = [], depNames = dependencies[moduleName], moduleResult;
         
         if (depNames.length === 0) {
             
-            modules[moduleName] = definitions[moduleName]();
+            moduleResult = definitions[moduleName]();
+            
+            if (!moduleResult) {
+                console.error("Module '" + moduleName + "' returned nothing");
+            }
+            
+            modules[moduleName] = moduleResult;
             
             dependingOn[moduleName].forEach(updateModule);
         }
@@ -160,7 +166,13 @@ var MO5 = (function () {
                 deps.push(modules[name]);
             });
             
-            modules[moduleName] = definitions[moduleName].apply(undefined, deps);
+            moduleResult = definitions[moduleName].apply(undefined, deps);
+            
+            if (!moduleResult) {
+                console.error("Module '" + moduleName + "' returned nothing.");
+            }
+            
+            modules[moduleName] = moduleResult;
             
             dependingOn[moduleName].forEach(updateModule);
         }
