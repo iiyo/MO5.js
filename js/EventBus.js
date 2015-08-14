@@ -334,6 +334,10 @@
             
             obj.triggerSync = squid.triggerSync.bind(squid);
             obj.triggerAsync = squid.triggerAsync.bind(squid);
+            
+            obj.subscribe("destroyed", function () {
+                squid.callbacks = [];
+            });
         };
         
         return EventBus;

@@ -91,6 +91,7 @@
             if (CoreObject.isCoreObject(value)) {
                 this.unsubscribers[value.id] = unsubscribe;
                 value.subscribe(listener, "destroyed");
+                value.subscribe("destroyed", function () {value = null;});
             }
 
             this.items.push(value);
