@@ -94,8 +94,10 @@
             var self = this, key = makeKey(k);
 
             function whenDestroyed () {
-                delete self.items[key];
-                self.count -= 1;
+                
+                if (self.has(k)) {
+                    self.remove(k);
+                }
             }
 
             if (!k) {
