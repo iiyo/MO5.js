@@ -1,8 +1,8 @@
 /*/////////////////////////////////////////////////////////////////////////////////
 
- MO5.js - JavaScript Library For Building Modern DOM And Canvas Applications
+ MO5.js - Modular JavaScript. Batteries included.
 
- Copyright (c) 2013 Jonathan Steinbeck
+ Copyright (c) 2015 Jonathan Steinbeck
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,7 @@ if (typeof window !== "undefined") {
 
 // [].forEach() shim
 (function () {
+    
     if (Array.prototype.forEach) {
         return;
     }
@@ -62,6 +63,56 @@ if (typeof window !== "undefined") {
             callback(this[i], i, this);
         }
     };
+    
+}());
+
+// [].indexOf() shim
+(function () {
+    
+    if (Array.prototype.indexOf) {
+        return;
+    }
+    
+    Array.prototype.indexOf = function (searchElement, fromIndex) {
+        
+        var k;
+        
+        if (this == null) {
+          throw new TypeError('"this" is null or not defined');
+        }
+        
+        var O = Object(this);
+        
+        var len = O.length >>> 0;
+        
+        if (len === 0) {
+            return -1;
+        }
+        
+        var n = +fromIndex || 0;
+        
+        if (Math.abs(n) === Infinity) {
+            n = 0;
+        }
+        
+        if (n >= len) {
+            return -1;
+        }
+        
+        k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+        
+        while (k < len) {
+            
+            if (k in O && O[k] === searchElement) {
+                return k;
+            }
+            
+            k++;
+        }
+        
+        return -1;
+    };
+    
 }());
 
 
@@ -90,185 +141,90 @@ var MO5 = (function () {
     
     "use strict";
     
-    var modules = {}, loadedScripts = {};
+    var modules = {}, loadedScripts = {}, dependencies = {}, definitions = {}, dependingOn = {};
+    var runners = [];
     
-    /**
-     * Inner class representing a Module with a state and dependencies.
-     * There can be only one module with a specific name. If another one
-     * with the same name is created, the existing one is returned instead.
-     */
-    function Module (name, callback, dependencies) {
+    function updateModule (moduleName) {
         
-        if (Module.moduleIsReady(name)) {
-            return modules[name];
+        var deps = [], depNames = dependencies[moduleName], moduleResult;
+        
+        if (depNames.length === 0) {
+            
+            moduleResult = definitions[moduleName]();
+            
+            if (!moduleResult) {
+                console.error("Module '" + moduleName + "' returned nothing");
+            }
+            
+            modules[moduleName] = moduleResult;
+            
+            dependingOn[moduleName].forEach(updateModule);
+        }
+        else if (allModulesLoaded(depNames)) {
+            
+            depNames.forEach(function (name) {
+                deps.push(modules[name]);
+            });
+            
+            moduleResult = definitions[moduleName].apply(undefined, deps);
+            
+            if (!moduleResult) {
+                console.error("Module '" + moduleName + "' returned nothing.");
+            }
+            
+            modules[moduleName] = moduleResult;
+            
+            dependingOn[moduleName].forEach(updateModule);
         }
         
-        /** @var The module's name. */
-        this.name = name;
-        
-        /**
-         * @var A callback that genererates the module's contents after
-         * all dependencies are ready.
-         */
-        this.callback = callback;
-        
-        /** @var Names of modules this module depends on. */
-        this.dependencies = dependencies || [];
-        
-        /** @var The current state of the module. Should be one of the "class constants". */
-        this.state = Module.STATE_UNINITIALIZED;
-        
-        /** @var A List of callbacks to be executed once the module's state is STATE_READY. */
-        this.observers = [];
-        
-        /** @var The module's content. Only available when the module's state is STATE_READY. */
-        this.content = undefined;
-        
-        modules[name] = this;
+        runners.forEach(function (runner) {
+            runner();
+        });
     }
     
-    /** @var State when the loading of the module has not been started yet. */
-    Module.STATE_UNINITIALIZED = "unitialized";
-    Module.STATE_READY = "ready";
-    
-    /**
-     * Is the module specified by the moduleName parameter ready to be used?
-     */
-    Module.moduleIsReady = function (moduleName) {
+    function allModulesLoaded (moduleNames) {
         
-        if (!(moduleName in modules)) {
-            return false;
-        }
+        var loaded = true;
         
-        return typeof modules[moduleName].isReady === "undefined" || 
-            modules[moduleName].isReady();
-    };
-    
-    /**
-     * Are the modules in the moduleNames parameter ready to be used?
-     * @param moduleNames Array of module names.
-     */
-    Module.modulesAreReady = function (moduleNames) {
-        
-        var i, len;
-        
-        for (i = 0, len = moduleNames.length; i < len; i += 1) {
-            if (!Module.moduleIsReady(moduleNames[i])) {
-                return false;
-            }
-        }
-        
-        return true;
-    };
-    
-    /**
-     * Gather the contents of all the modules specified in parameter moduleNames.
-     * @moduleNames An array with module names.
-     */
-    Module.gatherDependencies = function (moduleNames) {
-    
-        var dependencies = [];
-        
-        moduleNames.forEach(function (moduleName) {
-            if (modules[moduleName] && typeof modules[moduleName].content === "undefined") {
-                dependencies.push(modules[moduleName]);
-            }
-            else {
-                dependencies.push(modules[moduleName].content);
+        moduleNames.forEach(function (name) {
+            if (!modules[name]) {
+                loaded = false;
             }
         });
         
-        return dependencies;
-    
-    };
-    
-    /**
-     * Is this module ready to be used?
-     */
-    Module.prototype.isReady = function () {
-        return (this.state === Module.STATE_READY);
-    };
-    
-    /**
-     * Are the dependencies loaded yet?
-     */
-    Module.prototype.dependenciesReady = function () {
-        return Module.modulesAreReady(this.dependencies);
-    };
-    
-    Module.prototype.getDependenciesNotReady = function () {
-        
-        var dependenciesNotReady = [];
-        
-        this.dependencies.forEach(function (moduleName) {
-            if (modules[moduleName] && !modules[moduleName].isReady()) {
-                dependenciesNotReady.push(modules[moduleName]);
-            }
-        });
-        
-        return dependenciesNotReady;
-    };
-    
-    Module.prototype.addObserverToDependenciesNotReady = function (callback) {
-        this.getDependenciesNotReady().forEach(function (module) {
-            module.addObserver(callback);
-        });
-    };
-    
-    /**
-     * Registers an observer callback with this module which will be called
-     * when the module is ready. If the module already is ready, the observer
-     * will be called immediately.
-     */
-    Module.prototype.addObserver = function (observer) {
-        
-        if (this.isReady()) {
-            observer(this.content);
-            return;
-        }
-        
-        this.observers.push(observer);
-    };
-    
-    /**
-     * Marks this module as ready and calls all observers.
-     */
-    Module.prototype.finish = function () {
-        
-        var dependencies = [], content, self = this;
-        
-        if (this.isReady()) {
-            return;
-        }
-        
-        if (!this.dependenciesReady()) {
-            this.addObserverToDependenciesNotReady(function () { self.finish(); });
-            return;
-        }
-        
-        dependencies = Module.gatherDependencies(this.dependencies);
-        content = this.callback.apply(undefined, dependencies);
-        
-        if (typeof content === "undefined") {
-            throw new Error("Module definition callback returned undefined!");
-        }
-        
-        this.content = content;
-        this.state = Module.STATE_READY;
-        
-        this.observers.forEach(function (observer) {
-            observer(content);
-        });
-        
-        this.observers = []; // remove references to aid the garbage collector
-    };
+        return loaded;
+    }
     
     function MO5 (/* module names */) {
         
-        var moduleNames, runCallbacks = [], defineCallbacks = [], dependencies = [];
-        var modulesLoaded = 0, done = false, modulesLoading = false, capabilityObject;
+        var moduleNames, capabilityObject;
         
         moduleNames = [].slice.call(arguments);
+        
+        moduleNames.forEach(function (moduleName) {
+            
+            if (!(moduleName in dependencies) && !(moduleName in modules)) {
+                
+                dependencies[moduleName] = [];
+                
+                if (!dependingOn[moduleName]) {
+                    dependingOn[moduleName] = [];
+                }
+                
+                if (moduleName.match(/^ajax:/)) {
+                    MO5.ajax(MO5.ajax.HTTP_METHOD_GET, moduleName.replace(/^ajax:/, ""),
+                        null, ajaxResourceSuccessFn, ajaxResourceSuccessFn);
+                }
+                else {
+                    loadModule(moduleName);
+                }
+            }
+            
+            function ajaxResourceSuccessFn (request) {
+                modules[moduleName] = request;
+                dependingOn[moduleName].forEach(updateModule);
+            }
+        });
         
         capabilityObject = {
             run: run,
@@ -281,112 +237,70 @@ var MO5 = (function () {
         // Helper functions
         ///////////////////////////////////
         
-        function loadModules () {
-            
-            var moduleOffset = 0;
-            
-            modulesLoading = true;
-            
-            moduleNames.forEach(function (moduleName) {
-                
-                var currentOffset = moduleOffset;
-                
-                moduleOffset += 1;
-            
-                if (moduleName.match(/^ajax:/)) {
-                    MO5.ajax(MO5.ajax.HTTP_METHOD_GET, moduleName.replace(/^ajax:/, ""),
-                        null, ajaxResourceSuccessFn, ajaxResourceSuccessFn);
-                }
-                else {
-                    loadModule(moduleName, loadModuleSuccessFn, function (e) {
-                        console.error(e);
-                    });
-                }
-                
-                function ajaxResourceSuccessFn (request) {
-                    modules[moduleName] = request;
-                    loadModuleSuccessFn(request);
-                }
-                
-                function loadModuleSuccessFn (module) {
-                    
-                    modulesLoaded += 1;
-                    
-                    dependencies[currentOffset] = module;
-                    
-                    if (modulesLoaded === moduleNames.length) {
-                        
-                        done = true;
-                        
-                        defineCallbacks.forEach(function (callback) {
-                            try {
-                                callback();
-                            }
-                            catch (e) {
-                                console.error("Error while loading module '" + moduleName +
-                                    "':", e.stack, callback);
-                            }
-                        });
-                        
-                        runCallbacks.forEach(function (callback) {
-                            try {
-                                callback.apply(undefined, dependencies);
-                            }
-                            catch (e) {
-                                console.error(e.message, e.stack);
-                                console.dir(callback);
-                            }
-                        });
-                    }
-                }
-            });
-        }
-        
         function run (callback) {
             
-            if (done) {
-                return callback.apply(undefined, dependencies);
-            }
-            
-            runCallbacks.push(callback);
-            
-            if (!modulesLoading) {
-                loadModules();
+            if (!runner(true)) {
+                runners.push(runner);
             }
             
             return capabilityObject;
+            
+            function runner (doNotRemove) {
+                
+                var deps = [];
+                
+                if (allModulesLoaded(moduleNames)) {
+                    
+                    moduleNames.forEach(function (name) {
+                        deps.push(modules[name]);
+                    });
+                    
+                    callback.apply(undefined, deps);
+                    
+                    if (!doNotRemove) {
+                        runners.splice(runners.indexOf(runner), 1);
+                    }
+                    
+                    return true;
+                }
+                
+                return false;
+            }
         }
         
         function define (moduleName, callback) {
             
-            var module = new Module(moduleName, callback, moduleNames);
-            
-            if (module.isReady()) {
-                return capabilityObject;
+            if (moduleName in definitions) {
+                throw new Error("Module '" + moduleName + "' is already defined.");
             }
             
-            if (done) {
-                module.finish();
-                return capabilityObject;
+            definitions[moduleName] = callback;
+            dependencies[moduleName] = moduleNames;
+            
+            if (!dependingOn[moduleName]) {
+                dependingOn[moduleName] = [];
             }
             
-            defineCallbacks.push(finishModule);
+            moduleNames.forEach(function (name) {
+                
+                if (!dependingOn[name]) {
+                    dependingOn[name] = [];
+                }
+                
+                dependingOn[name].push(moduleName);
+            });
             
-            if (!modulesLoading) {
-                loadModules();
-            }
+            updateModule(moduleName);
             
             return capabilityObject;
             
-            function finishModule () {
-                module.finish();
-            }
         }
     }
     
     MO5.path = "";
     
     (function () {
+        
         var scripts = document.getElementsByTagName("script");
         
         MO5.path = scripts[scripts.length - 1].src.replace(/MO5\.js$/, "");
@@ -423,67 +337,33 @@ var MO5 = (function () {
         "MO5.types": MO5.path + "types.js"
     };
     
-    function loadModule (moduleName, onSuccess, onError) {
-        
-        onError = onError || function (e) { console.error(e.message, e.stack); };
+    function loadModule (moduleName) {
         
         if (!(moduleName in MO5.modules)) {
-            onError(new Error("Unknown module '" + moduleName + "'."));
-            return;
+            throw new Error("Unknown module '" + moduleName + "'.");
         }
         
-        if (Module.moduleIsReady(moduleName)) {
-            onScriptLoadSuccess();
-        }
-        else {
-            MO5.loadScript(MO5.modules[moduleName], onScriptLoadSuccess, onError);
-        }
-        
-        function onScriptLoadSuccess () {
-            
-            if (!modules[moduleName] || !modules[moduleName].addObserver) {
-                throw new Error("MO5: No module definition for module '" + moduleName +
-                    "' found in specified source file '" + MO5.modules[moduleName] + "'.");
-            }
-            
-            modules[moduleName].addObserver(onSuccess);
-            
-            if (modules[moduleName].dependenciesReady()) {
-                modules[moduleName].finish();
-            }
-        }
-        
+        MO5.loadScript(MO5.modules[moduleName]);
     }
     
-    MO5.loadScript = function (url, onSuccess, onError) {
+    MO5.loadScript = function (url) {
         
         var script = document.createElement("script");
+        var scriptId = "MO5_script_" + url;
         
-        if (loadedScripts[url]) {
-            onSuccess();
+        if (loadedScripts[url] || document.getElementById(scriptId)) {
             return;
         }
         
-        try {
-            script.onload = onload;
-            script.onreadystatechange = onload;
-            script.src = url;
-            document.body.appendChild(script);
-        }
-        catch (e) {
-            onError(e);
-        }
-            
-        function onload () {
-            if (!script.readyState || script.readyState === "loaded" || script.readyState === "complete") {
-                loadedScripts[url] = true;
-                onSuccess();
-            }
-        }
+        script.setAttribute("id", scriptId);
+        
+        script.src = url;
+        
+        document.body.appendChild(script);
     };
     
     MO5.defaults = {
-        fps: 30,
+        fps: 60,
         debug: true,
         canvas: {
             width: 640, // default width for canvas elements
@@ -533,9 +413,17 @@ MO5.ajax = (function () {
             var done, statusOk;
             
             done = requestObject.readyState === READY_STATE_DONE;
-            statusOk = requestObject.status === HTTP_STATUS_OK;
             
             if (done) {
+                
+                try {
+                    statusOk = requestObject.status === HTTP_STATUS_OK;
+                }
+                catch (error) {
+                    console.error(error);
+                    statusOk = false;
+                }
+                
                 if (statusOk) {
                     onSuccess(requestObject);
                 }

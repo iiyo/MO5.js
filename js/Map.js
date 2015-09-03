@@ -94,14 +94,9 @@
             var self = this, key = makeKey(k);
 
             function whenDestroyed () {
-                if (self.unsubscribers.hasOwnProperty(key)) {
-                    
-                    self.unsubscribers[key]();
-                    delete self.unsubscribers[key];
-                    
+                if (self.has(k)) {
+                    self.remove(k);
                 }
-                delete self.items[key];
-                self.count -= 1;
             }
 
             if (!k) {

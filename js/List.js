@@ -112,6 +112,15 @@
 
             return this;
         };
+        
+        List.prototype.clear = function () {
+            
+            var list = this;
+            
+            this.forEach(function (item, i) {
+                list.remove(i);
+            });
+        };
 
         List.prototype.at = function (i) {
             return this.items[+i];

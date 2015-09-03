@@ -60,26 +60,15 @@
     }
     
     function MO5AnimationModule (Exception, CoreObject, Queue, Timer, TimerWatcher) {
-
-        function AnimationError (msg) {
-            Error.call(this);
-            Exception.call(this);
-
-            this.message = msg;
-            this.name = "MO5.AnimationError";
-        }
-
-        AnimationError.prototype = new Exception();
-
-
+        
         /**
          * Uses callbacks to animate.
          * @param callbacks Optional list of callbacks. Can be of type Array or MO5.Queue.
          */
         function Animation (callbacks) {
-
+            
             CoreObject.call(this);
-
+            
             this.callbacks = new Queue();
             this.queue = new Queue();
             this.running = false;
@@ -88,7 +77,7 @@
             this.limit = 0;
             this.count = 0;
             this.currentWatcher = null;
-
+            
             if (callbacks && callbacks instanceof Queue) {
                 this.callbacks = callbacks;
             }
@@ -96,84 +85,84 @@
                 this.callbacks.replace(callbacks.slice());
             }
             else if (callbacks) {
-                throw new AnimationError("Parameter 1 is expected to be of type Array or MO5.Queue.");
+                throw new Error("Parameter 1 is expected to be of type Array or MO5.Queue.");
             }
         }
-
+        
         Animation.prototype = new CoreObject();
         Animation.prototype.constructor = Animation;
-
+        
         Animation.prototype.addStep = function (cb) {
-
+            
             if (this.running) {
-                throw new AnimationError("Cannot add steps to a running animation.");
+                throw new Error("Cannot add steps to a running animation.");
             }
-
+            
             this.callbacks.add(cb);
             this.trigger("updated", null, false);
-
+            
             return this;
         };
-
+        
         Animation.prototype.isRunning = function () {
             return this.running;
         };
-
+        
         Animation.prototype.isCanceled = function () {
             return this.canceled;
         };
-
+        
         Animation.prototype.isPaused = function () {
             return this.paused;
         };
-
+        
         Animation.prototype.start = function () {
             var fn, self = this, cbs;
-
+            
             if (this.running) {
-                throw new AnimationError("Animation is already running.");
+                throw new Error("Animation is already running.");
             }
-
+            
             cbs = this.callbacks.clone();
             this.queue = cbs;
-
+            
             this.running = true;
             this.canceled = false;
-
+            
             fn = function () {
                 var next, watcher;
-
+                
                 if (!cbs.hasNext()) {
-
+                    
                     self.count += 1;
-
+                    
                     if (self.isRunning()) {
-
+                        
                         if (self.limit && self.count == self.limit) {
-
+                            
                             self.running = false;
                             self.trigger("stopped", null, false);
                             self.count = 0;
                             self.limit = 0;
-
+                            
                             return;
                         }
-
+                        
                         cbs = self.callbacks.clone();
                         this.queue = cbs;
                         setTimeout(fn, 0);
-
+                        
                         return;
                     }
-
+                    
                     self.trigger("stopped", null, false);
-
+                    
                     return;
                 }
-
+                
                 next = cbs.next();
                 watcher = next();
-
+                
                 if (watcher && watcher instanceof TimerWatcher) {
                     self.currentWatcher = watcher;
                     watcher.once(fn, "stopped");
@@ -182,95 +171,95 @@
                     setTimeout(fn, 0);
                 }
             };
-
+            
             setTimeout(fn, 0);
-
+            
             return this;
         };
-
+        
         Animation.prototype.pause = function () {
-
+            
             if (this.paused) {
-                throw new AnimationError("Trying to pause an already paused animation.");
+                throw new Error("Trying to pause an already paused animation.");
             }
-
+            
             this.paused = true;
-
+            
             if (this.currentWatcher) {
                 this.currentWatcher.pause();
             }
-
+            
             this.trigger("paused", null, false);
-
+            
             return this;
         };
-
+        
         Animation.prototype.resume = function () {
             if (!this.paused) {
-                throw new AnimationError("Trying to resume an animation that isn't paused.");
+                throw new Error("Trying to resume an animation that isn't paused.");
             }
-
+            
             this.paused = false;
-
+            
             if (this.currentWatcher) {
                 this.currentWatcher.resume();
             }
-
+            
             this.trigger("resumed", null, false);
-
+            
             return this;
         };
-
+        
         Animation.prototype.cancel = function () {
-
+            
             if (this.canceled) {
-                throw new AnimationError("Trying to cancel an already canceled animation.");
+                throw new Error("Trying to cancel an already canceled animation.");
             }
-
+            
             this.canceled = true;
             this.running = false;
             this.count = 0;
             this.limit = 0;
-
+            
             if (this.currentWatcher) {
                 this.currentWatcher.cancel();
             }
-
+            
             this.trigger("canceled", null, false);
-
+            
             return this;
         };
-
+        
         Animation.prototype.stop = function () {
-
+            
             if (!this.running) {
-                throw new AnimationError("Trying to stop an animation that isn't running. " + 
+                throw new Error("Trying to stop an animation that isn't running. " + 
                     "Check isRunning() beforehand.");
             }
-
+            
             this.running = false;
             this.count = 0;
             this.limit = 0;
-
+            
             return this;
         };
-
+        
         Animation.prototype.loop = function (c) {
-
+            
             if (c < 1) {
-                throw new AnimationError("Parameter 1 is expected to be greater than zero.");
+                throw new Error("Parameter 1 is expected to be greater than zero.");
             }
-
+            
             this.count = 0;
             this.limit = c;
-
+            
             return this.start();
         };
-
+        
         Animation.prototype.promise = function () {
             return Timer.prototype.promise.call(this);
         };
-
+        
         return Animation;
 
     }
