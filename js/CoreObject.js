@@ -310,6 +310,46 @@
             
         };
         
+        CoreObject.prototype.subscribeTo = function (bus, event, listener) {
+            
+            var self = this;
+            
+            if (!(typeof bus.subscribe === "function" && typeof bus.unsubscribe === "function")) {
+                fail(new Exception("Cannot subscribe: Parameter 1 is " +
+                    "expected to be of type CoreObject or EventBus."));
+                return this;
+            }
+            if (typeof event !== "string") {
+                fail(new Exception("Cannot subscribe: Parameter 2 is " +
+                    "expected to be of type String."));
+                return this;
+            }
+            if (typeof listener !== "function") {
+                fail(new Exception("Cannot subscribe: Parameter 3 is " +
+                    "expected to be of type Function."));
+                return this;
+            }
+            
+            listener = listener.bind(this);
+            
+            bus.subscribe(event, listener);
+            
+            function thisDestroyed () {
+                bus.unsubscribe(event, listener);
+                self.unsubscribe("destroyed", thisDestroyed);
+                bus.unsubscribe("destroyed", busDestroyed);
+            }
+            function busDestroyed () {
+                bus.unsubscribe("destroyed", busDestroyed);
+                self.unsubscribe("destroyed", thisDestroyed);
+            }
+            
+            this.subscribe("destroyed", thisDestroyed);
+            bus.subscribe("destroyed", busDestroyed);
+            
+            return this;
+        };
+        
         return CoreObject;
         
         ///////////////////////////////////

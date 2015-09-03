@@ -192,6 +192,20 @@
             return new List(this.items.slice());
         };
         
+        List.prototype.destroy = function () {
+            
+            if (this.destroyed) {
+                return;
+            }
+            
+            for (var i = 0; i < this.unsubscribers.length; i++) {
+                this.unsubscribers[i]();
+                delete this.unsubscribers[i];
+            };
+            
+            CoreObject.prototype.destroy.apply(this, arguments);
+        }
+        
         return List;
         
     }

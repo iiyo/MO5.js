@@ -95,8 +95,10 @@
 
             function whenDestroyed () {
                 if (self.unsubscribers.hasOwnProperty(key)) {
+                    
                     self.unsubscribers[key]();
                     delete self.unsubscribers[key];
+                    
                 }
                 delete self.items[key];
                 self.count -= 1;
