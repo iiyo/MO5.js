@@ -91,6 +91,9 @@
             EventBus.inject(this, args.bus);
             
             flags[this.id] = {};
+            
+            this.$children = [];
+            this.$parent = null;
         }
         
         /**
@@ -113,6 +116,34 @@
          */
         CoreObject.isCoreObject = function (obj) {
             return obj instanceof CoreObject;
+        };
+        
+        CoreObject.prototype.addChild = function (child) {
+            
+            if (this.$children.indexOf(child) >= 0) {
+                return;
+            }
+            
+            child.$parent = this;
+            
+            this.$children.push(child);
+        };
+        
+        CoreObject.prototype.removeChild = function (child) {
+            
+            var index = this.$children.indexOf(child);
+            
+            if (index < 0) {
+                return;
+            }
+            
+            child.$parent = null;
+            
+            this.$children.splice(index, 1);
+        };
+        
+        CoreObject.prototype.hasChild = function (child) {
+            return this.$children.indexOf(child) >= 0;
         };
         
         /**
@@ -292,6 +323,16 @@
         CoreObject.prototype.destroy = function () {
             
             var id = this.id;
+            
+            if (this.$parent) {
+                this.$parent.removeChild(this);
+            }
+            
+            this.$children.forEach(function (child) {
+                if (typeof child === "object" && typeof child.destroy === "function") {
+                    child.destroy();
+                }
+            });
             
             this.destroyed = true;
             this.trigger("destroyed", null, false);

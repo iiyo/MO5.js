@@ -62,7 +62,8 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
     // If you want to add a method with the same name as a DOM element's
     // property to the prototype, you need to add the method's name to this array.
     Element.propertiesToExclude = [
-        "appendChild"
+        "appendChild",
+        "removeChild"
     ];
     
     /**
@@ -331,18 +332,7 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
             console.log(e);
         }
         
-        this.element = null;
-        
-        this.destroyed = true;
-        this.trigger("destroyed", null, false);
-        
-        for (var key in this) {
-            if (this.hasOwnProperty(key)) {
-                delete this[key];
-            }
-        }
-        
-        this.destroyed = true;
+        CoreObject.prototype.destroy.call(this);
     };
     
     ////////////////////////////////////////
