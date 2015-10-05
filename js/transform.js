@@ -119,7 +119,7 @@ define("MO5.transform", function (Exception, Timer, easing) {
             doLog = args.log || false,
             c = 0, // number of times func get's executed
             lastExecution = 0,
-            fps = args.fps || MO5.defaults.fps;
+            fps = args.fps || 60;
 
         f = args.easing || easing.sineEaseOut;
 
