@@ -36,8 +36,8 @@
 
 (function MO5QueueBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.CoreObject").
+    if (typeof using === "function") {
+        using("MO5.Exception", "MO5.CoreObject").
         define("MO5.Queue", MO5QueueModule);
     }
     else if (typeof window !== "undefined") {

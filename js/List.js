@@ -36,8 +36,8 @@
 
 (function MO5ListBootstrap () {
 
-    if (typeof MO5 === "function") {
-        MO5("MO5.CoreObject", "MO5.Queue", "MO5.types").
+    if (typeof using === "function") {
+        using("MO5.CoreObject", "MO5.Queue", "MO5.types").
         define("MO5.List", MO5ListModule);
     }
     else if (typeof window !== "undefined") {

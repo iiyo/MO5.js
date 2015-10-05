@@ -2,8 +2,8 @@
 
 (function MO5rangeBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.range", MO5rangeModule);
+    if (typeof using === "function") {
+        using().define("MO5.range", MO5rangeModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5.range = MO5rangeModule();

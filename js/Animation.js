@@ -36,8 +36,8 @@
 
 (function MO5AnimationBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.CoreObject", "MO5.Queue", "MO5.Timer", "MO5.TimerWatcher").
+    if (typeof using === "function") {
+        using("MO5.Exception", "MO5.CoreObject", "MO5.Queue", "MO5.Timer", "MO5.TimerWatcher").
         define("MO5.Animation", MO5AnimationModule);
     }
     else if (typeof window !== "undefined") {

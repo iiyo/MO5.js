@@ -32,9 +32,9 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window */
+/* global using, window */
 
-MO5().define("MO5.easing", function () {
+using().define("MO5.easing", function () {
     
     /**
      * Acceleration functions for use in MO5.transform().

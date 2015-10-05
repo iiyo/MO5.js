@@ -32,9 +32,9 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, document, console */
+/* global using, document, console */
 
-MO5("MO5.CoreObject", "MO5.transform", "MO5.TimerWatcher", "MO5.dom.effects.typewriter",
+using("MO5.CoreObject", "MO5.transform", "MO5.TimerWatcher", "MO5.dom.effects.typewriter",
         "MO5.types", "MO5.Point", "MO5.Size").
 define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         typewriter, types, Point, Size) {

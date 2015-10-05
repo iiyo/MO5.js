@@ -32,12 +32,12 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, module, window */
+/* global using, module, window */
 
 (function MO5ExceptionBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.Exception", MO5ExceptionModule);
+    if (typeof using === "function") {
+        using().define("MO5.Exception", MO5ExceptionModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5 = window.MO5 || {};

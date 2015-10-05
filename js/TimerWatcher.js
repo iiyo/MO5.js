@@ -32,12 +32,12 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, module, require */
+/* global using, window, module, require */
 
 (function MO5TimerWatcherBootstrap () {
 
-    if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Timer").
+    if (typeof using === "function") {
+        using("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Timer").
         define("MO5.TimerWatcher", MO5TimerWatcherModule);
     }
     else if (typeof window !== "undefined") {

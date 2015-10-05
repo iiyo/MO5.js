@@ -1,5 +1,5 @@
-/* global MO5, document */
+/* global using, document */
 
-MO5().define("MO5.globals.document", function () {
+using().define("MO5.globals.document", function () {
     return document;
 });

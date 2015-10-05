@@ -32,12 +32,12 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, console, module */
+/* global using, window, console, module */
 
 (function MO5failBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.fail", MO5failModule);
+    if (typeof using === "function") {
+        using().define("MO5.fail", MO5failModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5.fail = MO5failModule();

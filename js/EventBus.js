@@ -1,9 +1,9 @@
-/* global MO5, setTimeout, console, window, module */
+/* global using, setTimeout, console, window, module */
 
 (function MO5EventBusBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.EventBus", MO5EventBusModule);
+    if (typeof using === "function") {
+        using().define("MO5.EventBus", MO5EventBusModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5 = MO5 || {};

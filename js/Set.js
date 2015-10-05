@@ -1,9 +1,9 @@
-/* global MO5, module, require, window */
+/* global using, module, require, window */
 
 (function MO5SetBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.CoreObject", "MO5.types").
+    if (typeof using === "function") {
+        using("MO5.CoreObject", "MO5.types").
         define("MO5.Set", MO5SetModule);
     }
     else if (typeof window !== "undefined") {

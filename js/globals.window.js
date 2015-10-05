@@ -1,5 +1,5 @@
-/* global MO5, window */
+/* global using, window */
 
-MO5().define("MO5.globals.window", function () {
+using().define("MO5.globals.window", function () {
     return window;
 });

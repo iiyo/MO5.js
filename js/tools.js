@@ -32,9 +32,9 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, document, console */
+/* global using, window, document, console */
 
-MO5().define("MO5.tools", function () {
+using().define("MO5.tools", function () {
     
     var tools = {};
     

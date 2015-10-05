@@ -32,9 +32,9 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, setTimeout */
+/* global using, setTimeout */
 
-MO5().define("MO5.dom.effects.typewriter", function () {
+using().define("MO5.dom.effects.typewriter", function () {
     
     function typewriter (element, args)
     {

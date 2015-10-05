@@ -32,14 +32,14 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, setTimeout, module, require, process, console */
+/* global using, window, setTimeout, module, require, process, console */
 
 (function MO5ResultBootstrap () {
     
     console.warn("MO5.Result is deprecated - use MO5.Promise instead!");
 
-    if (typeof MO5 === "function") {
-        MO5("MO5.CoreObject", "MO5.Queue", "MO5.Exception", "MO5.fail").
+    if (typeof using === "function") {
+        using("MO5.CoreObject", "MO5.Queue", "MO5.Exception", "MO5.fail").
         define("MO5.Result", MO5ResultModule);
     }
     else if (typeof window !== "undefined") {

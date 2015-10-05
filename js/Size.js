@@ -32,9 +32,9 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5 */
+/* global using */
 
-MO5().define("MO5.Size", function () {
+using().define("MO5.Size", function () {
     
     function Size (width, height) {
         this.width = width || 0;

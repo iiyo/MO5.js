@@ -32,12 +32,12 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, module, require, window */
+/* global using, module, require, window */
 
 (function MO5MapBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.CoreObject", "MO5.Exception").
+    if (typeof using === "function") {
+        using("MO5.CoreObject", "MO5.Exception").
         define("MO5.Map", MO5MapModule);
     }
     else if (typeof window !== "undefined") {

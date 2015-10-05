@@ -1,8 +1,8 @@
-/* global MO5 */
+/* global using */
 
 /**
  * A wrapper module for ajax.
  */
-MO5().define("MO5.ajax", function () {
-    return MO5.ajax;
+using().define("MO5.ajax", function () {
+    return using.ajax;
 });

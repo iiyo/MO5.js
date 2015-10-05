@@ -1,5 +1,6 @@
-/* global MO5 */
-MO5().define("MO5.dom.escape", function () {
+/* global using */
+
+using().define("MO5.dom.escape", function () {
 
     function escape (unescapedHtml) {
         

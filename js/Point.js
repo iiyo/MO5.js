@@ -32,9 +32,9 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5 */
+/* global using */
 
-MO5().define("MO5.Point", function () {
+using().define("MO5.Point", function () {
     
     function Point (x, y)
     {

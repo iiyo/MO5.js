@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("MO5.Exception").define("MO5.assert", function (Exception) {
+using("MO5.Exception").define("MO5.assert", function (Exception) {
     
     function AssertionException () {
         Exception.apply(this, arguments);

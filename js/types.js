@@ -1,9 +1,9 @@
-/* global MO5, window, module */
+/* global using, window, module */
 
 (function MO5typesBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.types", MO5typesModule);
+    if (typeof using === "function") {
+        using().define("MO5.types", MO5typesModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5.types = MO5typesModule();

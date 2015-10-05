@@ -1,4 +1,4 @@
-/* global global, window, process, document, MO5, Promise, module */
+/* global global, window, process, document, using, Promise, module */
 
 (function() {
 var define, requireModule, require, requirejs;
@@ -689,8 +689,8 @@ requireModule('promise/polyfill').polyfill();
 
 (function MO5PromiseBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.Promise", MO5PromiseModule);
+    if (typeof using === "function") {
+        using().define("MO5.Promise", MO5PromiseModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5.Promise = MO5PromiseModule();

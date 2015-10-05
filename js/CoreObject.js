@@ -36,8 +36,8 @@
 
 (function MO5CoreObjectBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.fail", "MO5.EventBus").
+    if (typeof using === "function") {
+        using("MO5.Exception", "MO5.fail", "MO5.EventBus").
         define("MO5.CoreObject", MO5CoreObjectModule);
     }
     else if (typeof window !== "undefined") {
