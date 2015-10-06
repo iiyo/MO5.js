@@ -30,8 +30,10 @@ specific tasks without extending their interface.
 You can extend from MO5.CoreObject like this:
 
 ```javascript
-MO5("MO5.CoreObject").run(function (CoreObject) {
+using("MO5.CoreObject").run(function (CoreObject) {
+    
     function MyObject () {
+        
         CoreObject.apply(this, arguments);
         
         // ... whatever your constructor does
@@ -46,7 +48,8 @@ MO5("MO5.CoreObject").run(function (CoreObject) {
 Tweening:
 
 ```javascript
-MO5("MO5.transform").run(function (transform) {
+using("MO5.transform").run(function (transform) {
+    
     var element = document.getElementById("MyElement");
     
     // A function that takes a value and applies it to whatever needs
@@ -86,8 +89,9 @@ MO5("MO5.transform").run(function (transform) {
 Animations:
 
 ```javascript
-MO5("MO5.transform", "MO5.TimerWatcher", "MO5.Animation").
+using("MO5.transform", "MO5.TimerWatcher", "MO5.Animation").
 run(function (transform, TimerWatcher, Animation) {
+    
     var anim = new Animation();
     
     anim
@@ -125,9 +129,11 @@ run(function (transform, TimerWatcher, Animation) {
 Containers with weak references:
 
 ```javascript
-MO5("MO5.CoreObject", "MO5.Queue").
+using("MO5.CoreObject", "MO5.Queue").
 run(function (CoreObject, Queue) {
+    
     var q = new Queue(), o = new CoreObject();
+    
     q.length(); // 0
     q.add(o);
     q.length(); // 1
