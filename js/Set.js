@@ -14,7 +14,7 @@
     }
     
     function MO5SetModule (CoreObject, types) {
-    
+        
         var KEY_PREFIX = "MO5Set_";
         
         /**
@@ -100,7 +100,7 @@
                 
                 key = toKey(item);
                 this._stringItems[key] = item;
-
+                
                 if (CoreObject.isCoreObject(item)) {
                     this._unsubscribers[key] = this.delete.bind(this, item);
                     item.subscribe("destroyed", this._unsubscribers[key]);
@@ -133,7 +133,7 @@
                 key = toKey(item);
                 
                 delete this._stringItems[key];
-
+                
                 if (CoreObject.isCoreObject(item)) {
                     item.unsubscribe("destroyed", this._unsubscribers[key]);
                     delete this._unsubscribers[key];
@@ -262,16 +262,16 @@
          * @return Can the item be converted to key?
          */
         function canBeConvertedToKey (item) {
-
+            
             if (types.isObject(item)) {
-
+                
                 if (types.isNumber(item.id)) {
                     return true;
                 }
-
+                
                 return false;
             }
-
+            
             return true;
         }
         
@@ -284,11 +284,11 @@
          * @return The key as a string.
          */
         function toKey (item) {
-
+            
             if (types.isObject(item)) {
                 return KEY_PREFIX + "MO5CoreObject_" + item.id;
             }
-
+            
             return KEY_PREFIX + "SimpleValue_" + JSON.stringify(item);
         }
         

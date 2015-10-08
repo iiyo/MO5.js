@@ -51,32 +51,32 @@
     }
     
     function MO5MapModule (CoreObject, Exception) {
-
+        
         var prefix = "MO5Map";
-
+        
         function makeKey (k) {
             return prefix + k;
         }
-
+        
         function revokeKey (k) {
             return k.replace(new RegExp(prefix), "");
         }
-
+        
         function Map (content) {
-
+            
             var key;
-
+            
             CoreObject.call(this);
-
+            
             this.clear();
-
+            
             if (content) {
                 for (key in content) {
                     this.set(key, content[key]);
                 }
             }
         }
-
+        
         Map.prototype = new CoreObject();
         
         Map.prototype.clear = function () {
@@ -84,81 +84,81 @@
             this.unsubscribers = {};
             this.count = 0;
         };
-
+        
         Map.prototype.length = function () {
             return this.count;
         };
-
+        
         Map.prototype.set = function (k, value) {
-
+            
             var self = this, key = makeKey(k);
-
+            
             function whenDestroyed () {
                 if (self.has(k)) {
                     self.remove(k);
                 }
             }
-
+            
             if (!k) {
                 throw new Error("MO5.Map keys cannot be falsy.");
             }
-
+            
             if (this.has(key)) {
                 this.remove(key);
             }
-
+            
             if (value && value instanceof CoreObject) {
-
+                
                 if (value.destroyed) {
                     throw new Error("Trying to add an MO5.Object that has " +
                         "already been destroyed.");
                 }
-
+                
                 value.subscribe(whenDestroyed, "destroyed");
             }
-
+            
             if (k instanceof CoreObject) {
-
+                
                 if (k.destroyed) {
                     throw new Error("Trying to use an MO5.Object as key that " +
                         "has already been destroyed.");
                 }
-
+                
                 k.subscribe(whenDestroyed, "destroyed");
-
+                
             }
-
+            
             if (value && value instanceof CoreObject || k instanceof CoreObject) {
-
+                
                 this.unsubscribers[key] = function () {
-
+                    
                     if (value instanceof CoreObject) {
                         value.unsubscribe(whenDestroyed, "destroyed");
                     }
-
+                    
                     if (k instanceof CoreObject) {
                         k.unsubscribe(whenDestroyed, "destroyed");
                     }
                 };
             }
-
+            
             this.items[key] = value;
             this.count += 1;
-
+            
             this.trigger("updated", null, false);
             this.trigger("set", key, false);
-
+            
             return this;
         };
-
+        
         Map.prototype.get = function (k) {
-
+            
             var key = makeKey(k);
-
+            
             if (!this.items.hasOwnProperty(key)) {
                 return undefined;
             }
-
+            
             return this.items[key];
         };
         
@@ -174,56 +174,56 @@
             
             return this.get(key);
         };
-
+        
         Map.prototype.remove = function (k) {
-
+            
             var key = makeKey(k);
-
+            
             if (!this.has(k)) {
                 throw new Error("Trying to remove an unknown key from an MO5.Map.");
             }
-
+            
             if (this.unsubscribers.hasOwnProperty(key)) {
                 this.unsubscribers[key]();
                 delete this.unsubscribers[key];
             }
-
+            
             delete this.items[key];
             this.count -= 1;
-
+            
             this.trigger("updated", null, false);
             this.trigger("removed", key, false);
-
+            
             return this;
         };
-
+        
         Map.prototype.has = function (k) {
-
+            
             var key = makeKey(k);
-
+            
             return this.items.hasOwnProperty(key);
         };
-
+        
         Map.prototype.destroy = function () {
-
+            
             for (var key in this.unsubscribers) {
                 this.unsubscribers[key]();
                 delete this.unsubscribers[key];
             }
-
+            
             CoreObject.prototype.destroy.call(this);
         };
-
+        
         Map.prototype.forEach = function (fn) {
-
+            
             if (!fn || typeof fn !== "function") {
                 throw new Error("Parameter 1 is expected to be of type function.");
             }
-
+            
             for (var key in this.items) {
                 fn(this.items[key], revokeKey(key), this);
             }
-
+            
             return this;
         };
         
@@ -330,32 +330,32 @@
             
             return jsObject;
         };
-
+        
         Map.prototype.clone = function () {
             var clone = new Map();
-
+            
             this.forEach(function (item, key) {
                 clone.set(key, item);
             });
-
+            
             return clone;
         };
-
+        
         /**
          * Adds the content of another map to this map's content.
          * @param otherMap Another MO5.Map.
          */
         Map.prototype.addMap = function (otherMap) {
-
+            
             var self = this;
-
+            
             otherMap.forEach(function (item, key) {
                 self.set(key, item);
             });
-
+            
             return this;
         };
-
+        
         /**
          * Returns a new map which is the result of joining this map
          * with another map. This map isn't changed in the process.
@@ -366,9 +366,9 @@
         Map.prototype.join = function (otherMap) {
             return this.clone().addMap(otherMap);
         };
-
+        
         return Map;
-
+        
     }
-
+    
 }());

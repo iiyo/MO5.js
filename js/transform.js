@@ -101,15 +101,14 @@ define("MO5.transform", function (Exception, Timer, easing) {
      *            
      * 
      */
-    function transform (callback, from, to, args)
-    {
+    function transform (callback, from, to, args) {
+        
         args = args || {};
-
-        if (typeof callback === "undefined" || !callback)
-        {
+        
+        if (typeof callback === "undefined" || !callback) {
             throw new Exception("MO5.transform expects parameter callback to be a function.");
         }
-
+        
         var dur = typeof args.duration !== "undefined" && args.duration >= 0 ? args.duration : 500,
             f,
             func,
@@ -120,9 +119,9 @@ define("MO5.transform", function (Exception, Timer, easing) {
             c = 0, // number of times func get's executed
             lastExecution = 0,
             fps = args.fps || 60;
-
+        
         f = args.easing || easing.sineEaseOut;
-
+        
         func = function () {
             
             var dt, tElapsed;
@@ -165,10 +164,10 @@ define("MO5.transform", function (Exception, Timer, easing) {
                 
                 lastExecution = Date.now();
             }
-
+            
             requestAnimationFrame(func);
         };
-
+        
         timer.start();
         requestAnimationFrame(func);
         

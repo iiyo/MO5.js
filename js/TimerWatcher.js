@@ -35,7 +35,7 @@
 /* global using, window, module, require */
 
 (function MO5TimerWatcherBootstrap () {
-
+    
     if (typeof using === "function") {
         using("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Timer").
         define("MO5.TimerWatcher", MO5TimerWatcherModule);
@@ -58,7 +58,7 @@
     }
     
     function MO5TimerWatcherModule (Exception, CoreObject, fail, Timer) {
-
+        
         /**
          * A TimerWatcher object can be used to bundle MO5.Timer objects
          * together and observe them. The TimerWatcher object emits the
@@ -78,98 +78,103 @@
          * @event stopped()
          */
         function TimerWatcher (timers) {
+            
             var self;
-
+            
             CoreObject.call(this);
-
+            
             if (timers && !(timers instanceof Array)) {
                 throw new Exception("Parameter 1 is expected to be of type Array.").log();
             }
-
+            
             timers = timers || [];
-
+            
             self = this;
             this.timers = {};
             this.count = 0;
-
+            
             timers.forEach(function (t) {
                 self.addTimer(t);
             });
         }
-
+        
         TimerWatcher.prototype = new CoreObject();
         TimerWatcher.prototype.constructor = TimerWatcher;
-
+        
         TimerWatcher.prototype.addTimer = function (timer) {
             
             var fn, self = this;
-
+            
             if (this.timers[+timer]) {
-                fail(new Exception(
-                    "A timer with ID '" + timer + "' has already been added to the watcher."));
-                return this;
+                throw new Exception(
+                    "A timer with ID '" + timer + "' has already been added to the watcher.");
             }
-
+            
             this.count += 1;
-
+            
             fn = function () {
+                
                 self.count -= 1;
-
+                
                 if (self.count < 1) {
                     self.trigger("stopped", null, false);
                 }
             };
-
+            
             this.timers[+timer] = {
                 timer: timer,
                 unsubscribe: function () {
                     timer.unsubscribe(fn, "stopped");
                 }
             };
-
+            
             timer.subscribe(fn, "stopped");
             this.trigger("added", timer, false);
-
+            
             return this;
         };
-
+        
         /**
          * Creates and returns a Timer that is already added to
          * the TimerWatcher when it's returned to the caller.
          */
         TimerWatcher.prototype.createTimer = function () {
+            
             var timer = new Timer();
-
+            
             this.trigger("created", timer, false);
             this.addTimer(timer);
-
+            
             return timer;
         };
-
+        
         TimerWatcher.prototype.removeTimer = function (timer) {
+            
             if (!this.timers[+timer]) {
                 fail(new Exception("Trying to remove a timer that is unknown to the watcher."));
                 return this;
             }
-
+            
             this.timers[+timer].unsubscribe();
             delete this.timers[+timer];
-
+            
             this.trigger("removed", timer, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.forAll = function (what) {
+            
             var key, cur;
-
+            
             for (key in this.timers) {
+                
                 if (!(this.timers.hasOwnProperty(key))) {
                     continue;
                 }
-
+                
                 cur = this.timers[key].timer;
-
+                
                 if (cur instanceof TimerWatcher) {
                     this.timers[key].timer.forAll(what);
                 }
@@ -177,47 +182,51 @@
                     this.timers[key].timer[what]();
                 }
             }
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.cancel = function () {
+            
             this.forAll("cancel");
             this.trigger("canceled", null, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.pause = function () {
+            
             this.forAll("pause");
             this.trigger("paused", null, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.resume = function () {
+            
             this.forAll("resume");
             this.trigger("resumed", null, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.stop = function () {
             return this.forAll("stop");
         };
-
+        
         TimerWatcher.prototype.start = function () {
+            
             this.forAll("start");
             this.trigger("started", null, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.promise = function () {
             return Timer.prototype.promise.call(this);
         };
-
+        
         return TimerWatcher;
-
+        
     }
 }());

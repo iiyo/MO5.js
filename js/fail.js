@@ -47,7 +47,7 @@
     }
     
     function MO5failModule () {
-
+        
         /**
          * A function to log errors with stack traces to the console.
          * Useful if you encounter some minor errors that are no show-stoppers
@@ -55,20 +55,20 @@
          * debug your code by looking at the console output.
          */
         function fail (e) {
-
+            
             if (console.error) {
                 console.error(e.toString());
             }
             else {
                 console.log(e.toString());
             }
-
+            
             if (e.stack) {
                 console.log(e.stack);
             }
         }
-
+        
         return fail;
-
+        
     }
 }());

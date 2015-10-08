@@ -238,7 +238,7 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         
         return new TimerWatcher().addTimer(t0).addTimer(t1);
     };
-
+    
     Element.prototype.move = function (x, y, args) {
         
         args = args || {};
@@ -249,13 +249,13 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         
         return this.moveTo(dx, dy, args);
     };
-
+    
     Element.prototype.display = function () {
         this.element.style.visibility = "";
     };
     
     Element.prototype.show = Element.prototype.display;
-
+    
     Element.prototype.hide = function () {
         this.element.style.visibility = "hidden";
     };

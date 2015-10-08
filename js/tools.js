@@ -42,26 +42,24 @@ using().define("MO5.tools", function () {
      * Returns a unique ID for MO5 objects.
      * @return [Number] The unique ID.
      */
-    tools.getUniqueId = (function ()
-    {
+    tools.getUniqueId = (function () {
+        
         var n = 0;
         
         return function () {
             return n++;
         };
     }());
-
+    
     /**
      * Returns the window's width and height.
      * @return Object An object with a width and a height property.
      */
-    tools.getWindowDimensions = function ()
-    {
-        var e = window,
-            a = 'inner';
+    tools.getWindowDimensions = function () {
         
-        if (!('innerWidth' in e))
-        {
+        var e = window, a = 'inner';
+        
+        if (!('innerWidth' in e)) {
             a = 'client';
             e = document.documentElement || document.body;
         }
@@ -71,33 +69,34 @@ using().define("MO5.tools", function () {
             height: e[a + 'Height']
         };
     };
-
+    
     /**
      * Scales an element to fit the window using CSS transforms.
      * @param el The DOM element to scale.
      * @param w The normal width of the element.
      * @param h The normal height of the element.
      */
-    tools.fitToWindow = function (el, w, h)
-    {
+    tools.fitToWindow = function (el, w, h) {
+        
         var dim, ratio, sw, sh, ratioW, ratioH;
         
         dim = tools.getWindowDimensions();
         sw = dim.width; // - (dim.width * 0.01);
         sh = dim.height; // - (dim.height * 0.01);
-
+        
         ratioW = sw / w;
         ratioH = sh / h;
-
+        
         ratio = ratioW > ratioH ? ratioH : ratioW;
-
+        
         el.setAttribute('style',
         el.getAttribute('style') + ' -moz-transform: scale(' + ratio + ',' + ratio + ') rotate(0.01deg);' + ' -ms-transform: scale(' + ratio + ',' + ratio + ');' + ' -o-transform: scale(' + ratio + ',' + ratio + ');' + ' -webkit-transform: scale(' + ratio + ',' + ratio + ');' + ' transform: scale(' + ratio + ',' + ratio + ');');
     };
     
     tools.timeoutInspector = (function () {
         
-        var oldSetTimeout, oldSetInterval, oldClearTimeout, oldClearInterval, oldRequestAnimationFrame;
+        var oldSetTimeout, oldSetInterval, oldClearTimeout;
+        var oldClearInterval, oldRequestAnimationFrame;
         var activeIntervals = {}, timeoutCalls = 0, intervalCalls = 0, animationFrameRequests = 0;
         
         oldSetTimeout = window.setTimeout;
@@ -107,12 +106,15 @@ using().define("MO5.tools", function () {
         oldRequestAnimationFrame = window.requestAnimationFrame;
         
         return {
+            
             logAnimationFrameRequests: false,
             logTimeouts: false,
             logIntervals: false,
             
             enable: function () {
+                
                 window.setTimeout = function (f, t) {
+                    
                     var h = oldSetTimeout(f, t);
                     
                     timeoutCalls += 1;
@@ -125,6 +127,7 @@ using().define("MO5.tools", function () {
                 };
                 
                 window.setInterval = function (f, t) {
+                    
                     var h = oldSetInterval(f, t);
                     
                     intervalCalls += 1;
@@ -138,12 +141,14 @@ using().define("MO5.tools", function () {
                 };
                 
                 window.clearTimeout = function (h) {
+                    
                     console.log("Clearing timeout: ", h);
                     
                     return oldClearTimeout(h);
                 };
                 
                 window.clearInterval = function (h) {
+                    
                     console.log("Clearing interval: ", h);
                     
                     if (!(h in activeIntervals)) {
@@ -157,6 +162,7 @@ using().define("MO5.tools", function () {
                 };
                 
                 window.requestAnimationFrame = function (f) {
+                    
                     animationFrameRequests += 1;
                     
                     if (this.logAnimationFrameRequests) {
@@ -176,6 +182,7 @@ using().define("MO5.tools", function () {
             },
             
             getActiveIntervals: function () {
+                
                 var key, handles = [];
                 
                 for (key in this.activeIntervals) {

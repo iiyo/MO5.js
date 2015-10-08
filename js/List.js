@@ -35,7 +35,7 @@
 /* global MO5, window, require, module */
 
 (function MO5ListBootstrap () {
-
+    
     if (typeof using === "function") {
         using("MO5.CoreObject", "MO5.Queue", "MO5.types").
         define("MO5.List", MO5ListModule);
@@ -52,17 +52,17 @@
     }
     
     function MO5ListModule (CoreObject, Queue, types) {
-
+        
         function List (items) {
             
             CoreObject.call(this);
-
+            
             this.unsubscribers = {};
             this.items = types.isArray(items) ? items : [];
         }
-
+        
         List.prototype = new CoreObject();
-
+        
         List.prototype.length = function () {
             return this.items.length;
         };
@@ -93,23 +93,23 @@
                 value.subscribe(listener, "destroyed");
                 value.subscribe("destroyed", function () {value = null;});
             }
-
+            
             this.items.push(value);
-
+            
             return this;
         };
-
+        
         List.prototype.remove = function (i) {
-
+            
             var val = this.items[i];
-
+            
             if (CoreObject.isCoreObject(val)) {
                 this.unsubscribers[val.id]();
                 delete this.unsubscribers[val.id];
             }
-
+            
             this.items.splice(i, 1);
-
+            
             return this;
         };
         
@@ -121,7 +121,7 @@
                 list.remove(i);
             });
         };
-
+        
         List.prototype.at = function (i) {
             return this.items[+i];
         };
@@ -140,15 +140,15 @@
             
             return values;
         };
-
+        
         List.prototype.toQueue = function () {
             
             var q = new Queue();
-
+            
             this.items.forEach(function (item) {
                 q.add(item);
             });
-
+            
             return q;
         };
         

@@ -51,133 +51,142 @@
     }
     
     function MO5QueueModule (Exception, CoreObject) {
-
+        
         function Queue (arr) {
             CoreObject.call(this);
-
+            
             if (arr && !(arr instanceof Array)) {
                 throw new Exception("Parameter 1 is expected to be of type Array.");
             }
-
+            
             this.arr = arr || [];
         }
-
+        
         Queue.prototype = new CoreObject();
         Queue.prototype.constructor = Queue;
-
+        
         Queue.prototype.length = function () {
             return this.arr.length;
         };
-
+        
         /**
          * Adds an item to the back of the queue.
          */
         Queue.prototype.add = function (val) {
+            
             var self = this, index = this.arr.length;
-
+            
             if (val instanceof CoreObject) {
-
+                
                 if (val.destroyed) {
-                    throw new Exception("Trying to add an MO5.Object that has already been destroyed.");
+                    throw new Exception("Trying to add an MO5.Object that has " +
+                        "already been destroyed.");
                 }
-
-                val.once(function () { if (!self.destroyed) { self.arr.splice(index, 1); } }, "destroyed");
+                
+                val.once(function () {
+                    if (!self.destroyed) {
+                        self.arr.splice(index, 1);
+                    }
+                }, "destroyed");
             }
-
+            
             this.arr.push(val);
             this.trigger("updated");
             this.trigger("added", val);
-
+            
             return this;
         };
-
+        
         /**
          * Replaces all items of the queue with the items in the first parameter.
          * @param arr An array containing the new items.
          */
         Queue.prototype.replace = function (arr) {
+            
             if (!(arr instanceof Array)) {
                 throw new Exception("Parameter 1 is expected to be of type Array.");
             }
-
+            
             this.arr = arr;
-
+            
             this.trigger("updated");
             this.trigger("replaced", arr);
-
+            
             return this;
         };
-
+        
         /**
          * Removes the front of the queue and returns it.
          */
         Queue.prototype.next = function () {
-
+            
             if (!this.hasNext()) {
                 throw new Exception("Calling next() on empty queue.");
             }
-
+            
             var ret = this.arr.shift();
-
+            
             this.trigger("updated");
             this.trigger("next");
-
+            
             if (this.arr.length < 1) {
                 this.trigger("emptied");
             }
-
+            
             return ret;
         };
-
+        
         /**
          * Returns the front item of the queue without removing it.
          */
         Queue.prototype.peak = function () {
             return this.isEmpty() ? undefined : this.arr[0];
         };
-
+        
         Queue.prototype.isEmpty = function () {
             return !this.hasNext();
         };
-
+        
         Queue.prototype.hasNext = function () {
             return this.arr.length > 0;
         };
-
+        
         /**
          * Removes all items from the queue.
          */
         Queue.prototype.clear = function () {
+            
             this.arr = [];
             this.trigger("updated");
             this.trigger("cleared");
-
+            
             return this;
         };
-
+        
         /**
          * Reverses the queue's order so that the first item becomes the last.
          */
         Queue.prototype.reverse = function () {
+            
             var q = new Queue(), len = this.length(), i = len - 1;
-
+            
             while (i >= 0) {
                 q.add(this.arr[i]);
                 i -= 1;
             }
-
+            
             return q;
         };
-
+        
         /**
          * Returns a shallow copy of the queue.
          */
         Queue.prototype.clone = function () {
             return new Queue(this.arr.slice());
         };
-
+        
         return Queue;
-
+        
     }
     
 }());

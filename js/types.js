@@ -13,13 +13,13 @@
     }
     
     function MO5typesModule () {
-
+        
         var types = {};
-
+        
         types.isObject = function (thing) {
             return (typeof thing === "object" && thing !== null);
         };
-
+        
         types.isString = function (thing) {
             return typeof thing === "string";
         };
@@ -31,9 +31,9 @@
         types.isFunction = function (thing) {
             return typeof thing === "function";
         };
-
+        
         types.isArray = function (thing) {
-
+            
             if (Array.isArray) {
                 return Array.isArray(thing);
             }
@@ -41,15 +41,15 @@
             if (!types.isObject(thing)) {
                 return false;
             }
-
+            
             return thing instanceof Array;
         };
         
         types.hasForEach = function (thing) {
             return types.isObject(thing) && types.isFunction(thing.forEach);
         };
-
+        
         return types;
-
+        
     }
 }());

@@ -15,13 +15,13 @@
     function MO5rangeModule () {
         
         function range (first, last) {
-
+            
             var bag = [], i;
-
+            
             for (i = first; i <= last; i += 1) {
                 bag.push(i);
             }
-
+            
             return bag;
         }
         

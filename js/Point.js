@@ -36,14 +36,13 @@
 
 using().define("MO5.Point", function () {
     
-    function Point (x, y)
-    {
+    function Point (x, y) {
         this.x = x;
         this.y = y;
     }
-
-    Point.prototype.getDistance = function (otherPoint)
-    {
+    
+    Point.prototype.getDistance = function (otherPoint) {
+        
         var dx = this.x - otherPoint.x,
             dy = this.y - otherPoint.y,
             dist = Math.squrt(dx * dx + dy * dy);

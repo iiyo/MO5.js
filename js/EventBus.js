@@ -1,4 +1,4 @@
-/* global using, setTimeout, console, window, module */
+/* global using, MO5, setTimeout, console, window, module */
 
 (function MO5EventBusBootstrap () {
     
@@ -23,10 +23,6 @@
             
             args = args || {};
             
-            if (!( this instanceof EventBus)) {
-                return new EventBus( args );
-            }
-            
             this.debug = args.debug || false;
             this.interceptErrors = args.interceptErrors || false;
             this.log = args.log || false;
@@ -49,7 +45,8 @@
                 }
                 
                 name = data.error.name || "Error";
-                console.log(name + " in listener; Event: " + data.info.event + "; Message: " + data.error.message);
+                console.log(name + " in listener; Event: " + data.info.event + "; Message: " +
+                    data.error.message);
             }
         }
         
@@ -57,6 +54,7 @@
         EventBus.FLOW_TYPE_SYNCHRONOUS = 1;
         
         EventBus.create = function(args) {
+            
             args = args || {};
             
             return new EventBus(args);
@@ -91,6 +89,7 @@
             
             this.callbacks[event] = this.callbacks[event] || [];
             this.callbacks[event].push(listener);
+            
             this.trigger(
                 "EventBus.subscribe", 
                 {
@@ -152,7 +151,8 @@
         
         EventBus.prototype.once = function (listenerOrEvent1, listenerOrEvent2) {
             
-            var fn, self = this, event, listener, firstParamIsFunction, secondParamIsFunction, called = false;
+            var fn, self = this, event, listener;
+            var firstParamIsFunction, secondParamIsFunction, called = false;
             
             firstParamIsFunction = typeof listenerOrEvent1 === "function";
             secondParamIsFunction = typeof listenerOrEvent2 === "function";
@@ -192,14 +192,20 @@
             
             var cbs, len, info, j, f, cur, self, flowType;
             
-            if (typeof event !== "undefined" && typeof event !== "string" && typeof event !== "number") {
+            if (
+                typeof event !== "undefined" &&
+                typeof event !== "string" &&
+                typeof event !== "number"
+            ) {
                 throw new Error("Event names can only be strings or numbers! event: ", event);
             }
             
-            event = arguments.length ? event : "*";
-            flowType = (typeof async !== "undefined" && async === false) ? EventBus.FLOW_TYPE_SYNCHRONOUS : this.defaults.flowType;
-            
             self = this;
+            event = arguments.length ? event : "*";
+            
+            flowType = (typeof async !== "undefined" && async === false) ?
+                EventBus.FLOW_TYPE_SYNCHRONOUS :
+                this.defaults.flowType;
             
             // get subscribers in all relevant namespaces
             cbs = (function() {
@@ -210,6 +216,7 @@
                 words = event.split(".");
                 
                 for (n = 0, wc = words.length ; n < wc ; ++n) {
+                    
                     old = old + (n > 0 ? "." : "") + words[n];
                     matches = self.callbacks[old] || [];
                     
@@ -292,7 +299,7 @@
                     }
                 }
             };
-
+            
             if (flowType === EventBus.FLOW_TYPE_ASYNCHRONOUS) {
                 setTimeout(f, 0);
             }
